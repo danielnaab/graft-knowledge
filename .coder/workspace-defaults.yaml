@@ -1,0 +1,30 @@
+# Repository settings
+repo_url: "ssh://forgejo@platform-vm:2222/daniel/graft-knowledge.git"
+repo_dir: ""  # Auto-generated from workspace name (e.g., /home/coder/graft-main)
+git_name: "Daniel Naab"
+git_email: "danielnaab@gmail.com"
+
+# Enable Codex for AI agent tasks
+enable_codex: true
+default_model: "qwen2.5-coder:7b-instruct"
+approval_mode: "on-failure"
+sandbox_mode: "workspace-write"
+
+# Clone homelab alongside for infrastructure iteration
+# This enables you to edit Coder templates/scripts from the graft-knowledge workspace
+additional_repos: "homelab:ssh://forgejo@platform-vm:2222/daniel/homelab.git"
+
+# Homelab service endpoints
+forgejo_host: "platform-vm"
+forgejo_ssh_port: 2222
+forgejo_ssh_user: "forgejo"
+mcpjungle_url: "http://platform-vm:8085/mcp"
+openai_base_url: "http://platform-vm/ai/v1"
+
+# Secrets are injected via environment variables from .env.local
+# They are NOT stored in this file (which is version-controlled)
+# The secrets are:
+#   - forgejo_token
+#   - mcpjungle_auth_header
+#   - openai_api_key
+#   - anthropic_api_key

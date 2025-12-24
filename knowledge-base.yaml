@@ -1,0 +1,35 @@
+apiVersion: kb/v1
+name: graft-knowledge
+description: "Knowledge base for the Graft tool project - architecture, design decisions, and project management"
+
+entrypoints:
+  human: docs/README.md
+  agent: docs/agents.md
+
+meta:
+  entrypoint: "../meta-knowledge-base/docs/meta.md"
+
+imports:
+  - kind: local
+    path: ../meta-knowledge-base
+    entrypoint: meta.yaml
+
+paths:
+  docs: docs
+  notes: notes
+
+sources:
+  canonical:
+    - path: docs/architecture.md
+      note: "Architecture decisions are canonical for system design"
+    - path: docs/decisions/**
+      note: "ADRs (Architecture Decision Records) are canonical for tradeoffs"
+
+rules:
+  lifecycle:
+    statuses: ["draft", "working", "stable", "deprecated"]
+  provenance:
+    requiredFor: ["factual-claims", "operational-guidance"]
+  writes:
+    allow: ["docs/**", "notes/**"]
+    deny: ["secrets/**", "config/prod/**"]

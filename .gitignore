@@ -29,3 +29,6 @@ temp/
 dist/
 build/
 *.log
+
+# Graft local overrides
+graft.local.yaml

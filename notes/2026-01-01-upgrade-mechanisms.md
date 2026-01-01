@@ -271,8 +271,68 @@ Enhanced for AI:
 - [ ] Specify changelog conventions
 - [ ] Define command execution model
 
+## Conclusion (2026-01-01 Evening)
+
+After extensive discussion and analysis, the design has been refined and finalized:
+
+### Key Decisions Made
+
+1. **Git refs over semver** ([Decision 0002](../docs/decisions/decision-0002-git-refs-over-semver.md))
+   - Changes identified by any git ref (commit, tag, branch)
+   - No requirement for semantic versioning
+   - Optional semver awareness for convenience
+
+2. **Explicit change declarations** ([Decision 0003](../docs/decisions/decision-0003-explicit-change-declarations.md))
+   - Changes defined in graft.yaml, not parsed from markdown
+   - Deterministic, validatable, reliable
+   - CHANGELOG.md remains for human context
+
+3. **Atomic upgrades** ([Decision 0004](../docs/decisions/decision-0004-atomic-upgrades.md))
+   - All-or-nothing operations
+   - No intermediate states
+   - Rollback on failure
+
+### Minimal Primitives
+
+The design converged on two core primitives:
+
+1. **Change**: git ref + optional metadata (type, migration, verify)
+2. **Dependency**: source + consumed ref + commit hash
+
+Everything else is metadata or operations built on these primitives.
+
+### Architecture
+
+The finalized architecture positions Graft as:
+- **Higher-order change tracking** (like git for code, Graft for semantic changes)
+- **Git-native** (leverages existing primitives)
+- **Minimal and composable** (simple abstractions that combine powerfully)
+- **Tool-agnostic** (works with any migration tool via commands)
+
+### Implementation-Ready
+
+Documentation has been created:
+- **4 decision records** capturing architectural choices
+- **4 specification documents** ready for implementation:
+  - [Change Model](../docs/specification/change-model.md)
+  - [graft.yaml Format](../docs/specification/graft-yaml-format.md)
+  - [Lock File Format](../docs/specification/lock-file-format.md)
+  - [Core Operations](../docs/specification/core-operations.md)
+- **Updated architecture** document with complete system design
+
+The Python implementation can now proceed based on these specs.
+
+### Key Insights
+
+1. **Parsing is brittle** - Explicit declarations are more reliable than markdown parsing
+2. **Installation = Consumption** - Separating these states adds unnecessary complexity
+3. **Git already solved this** - Use git primitives instead of inventing new ones
+4. **Simple is powerful** - Two primitives are sufficient for the entire system
+
 ## Related
 
 - [Architecture](../docs/architecture.md)
 - [Decision 0001: Initial Scope](../docs/decisions/decision-0001-initial-scope.md)
-- Next: Create use cases documentation
+- [Decision 0002: Git Refs Over Semver](../docs/decisions/decision-0002-git-refs-over-semver.md)
+- [Decision 0003: Explicit Change Declarations](../docs/decisions/decision-0003-explicit-change-declarations.md)
+- [Decision 0004: Atomic Upgrades](../docs/decisions/decision-0004-atomic-upgrades.md)

@@ -11,6 +11,7 @@ Graft is a task runner and git-centered package manager that aims to simplify:
 
 ## Where to start
 
+- [Use Cases](use-cases.md) - What Graft enables and why
 - [Architecture](architecture.md) - System design and core concepts
 - [Decisions](decisions/) - Architecture Decision Records (ADRs)
 - [Notes](../notes/) - Weekly notes and explorations

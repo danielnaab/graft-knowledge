@@ -21,9 +21,10 @@ Graft is a task runner and git-centered package manager that aims to simplify:
 
 ## Latest Updates
 
-**2026-01-05**: Specification v2.0 - Design Improvements
-- Added 4 new architectural decisions (0005-0008)
-- Enhanced specifications: lock file ordering, API versioning, mirrors, validation
+**2026-01-05**: Specification Enhancements
+- Added 2 new architectural decisions (0005-0006)
+- Enhanced specifications: lock file ordering, validation operations
+- Clarified design choices (no partial resolution)
 - See [Work Log](work-logs/2026-01-05-design-improvements-analysis.md) for details
 
 ## Status

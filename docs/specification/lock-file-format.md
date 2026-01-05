@@ -65,37 +65,16 @@ dependencies:
 
 **Type**: `string`
 
-**Description**: Specifies the lock file format version. This follows a similar pattern to Kubernetes API versioning.
+**Description**: Identifies the lock file format version.
 
-**Format**: `graft/v{N}` where N is the major version number
-
-**Semantics**:
-
-- **`graft/v0`** - Experimental/preview format
-  - Breaking changes MAY occur between v0 releases
-  - Used during initial Graft development
-  - Signals to tooling: "expect changes"
-
-- **`graft/v1`** (future) - First stable format
-  - Breaking changes MUST NOT occur within v1.x releases
-  - Backward compatible additions allowed (new optional fields)
-  - Tools supporting v1 MUST handle all v1.x formats
-
-- **`graft/v2`** (future) - Second major version
-  - Signals breaking changes from v1
-  - Migration tooling SHOULD be provided
-
-**Version compatibility**:
-- Tools MUST reject lock files with unsupported apiVersion
-- Tools SHOULD provide clear error messages suggesting upgrade
-- Tools MAY support multiple versions simultaneously
+**Current value**: `graft/v0`
 
 **Example**:
 ```yaml
-apiVersion: graft/v0  # Current experimental format
+apiVersion: graft/v0
 ```
 
-See: [Decision 0008: API Versioning Semantics](../decisions/decision-0008-api-versioning.md)
+**Note**: Currently in initial development phase. Format may evolve. Future versions will use `graft/v1`, `graft/v2`, etc. when the specification stabilizes.
 
 ## Section: dependencies
 

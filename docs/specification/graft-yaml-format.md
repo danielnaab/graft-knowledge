@@ -61,12 +61,6 @@ dependencies:
   <dep-name>:
     source: string                # Required: git URL or path
     ref: string                   # Optional: specific ref (default: main)
-
-# Mirror configuration (optional, for enterprise/offline support)
-mirrors:
-  - pattern: string               # Required: glob pattern for URL matching
-    replace: string               # Required: replacement URL pattern
-    fallback: boolean             # Optional: try original if mirror fails (default: false)
 ```
 
 ## Section: metadata
@@ -347,123 +341,6 @@ dependencies:
   shared-utils:
     source: "../shared-utils"
 ```
-
-## Section: mirrors
-
-Configures URL rewriting for dependency sources (optional). Useful for enterprise environments, mirrors, and offline development.
-
-### Structure
-
-```yaml
-mirrors:
-  - pattern: string      # Required: glob pattern for URL matching
-    replace: string      # Required: replacement URL pattern
-    fallback: boolean    # Optional: try original if mirror fails (default: false)
-```
-
-### Fields
-
-#### pattern (required)
-**Type**: `string`
-
-**Description**: Glob pattern to match against dependency source URLs. First matching pattern wins.
-
-**Syntax**: Standard glob with `*` wildcard
-
-**Examples**:
-```yaml
-pattern: "https://github.com/*"          # Match all github HTTPS URLs
-pattern: "git@github.com:*"              # Match all github SSH URLs
-pattern: "https://github.com/myorg/*"    # Match specific org only
-```
-
-#### replace (required)
-**Type**: `string`
-
-**Description**: Replacement URL pattern. `*` in pattern is replaced with matched portion.
-
-**Examples**:
-```yaml
-# Replace github.com with internal mirror
-pattern: "https://github.com/*"
-replace: "https://github-mirror.corp.internal/*"
-
-# Rewrite to different git server
-pattern: "git@github.com:*"
-replace: "git@git.corp.internal:mirrors/*"
-```
-
-#### fallback (optional)
-**Type**: `boolean`
-
-**Default**: `false`
-
-**Description**: If true, attempt original URL if mirrored URL fails. Useful for hybrid environments (office + remote work).
-
-**Examples**:
-```yaml
-# Try mirror first, fall back to original
-fallback: true
-
-# Mirror only (air-gapped environment)
-fallback: false
-```
-
-### Semantics
-
-1. **Pattern matching**: Patterns evaluated top-to-bottom, first match wins
-2. **URL rewriting**: Matched `*` portion substituted into replacement
-3. **Transparency**: Original URLs stored in lock file, not rewritten URLs
-4. **Scope**: Project-level mirrors (in graft.yaml) override global mirrors (~/.graft/config.yaml)
-
-### Examples
-
-**Example 1: Corporate mirror**
-```yaml
-mirrors:
-  - pattern: "https://github.com/*"
-    replace: "https://github.corp-mirror.internal/*"
-    fallback: true  # Work from office or home
-```
-
-**Example 2: Air-gapped environment**
-```yaml
-mirrors:
-  - pattern: "https://github.com/*"
-    replace: "https://internal-git.corp/mirrors/github/*"
-    fallback: false  # No external access allowed
-
-  - pattern: "git@github.com:*"
-    replace: "git@internal-git.corp:mirrors/github/*"
-    fallback: false
-```
-
-**Example 3: Fork substitution**
-```yaml
-# Use our fork instead of upstream
-mirrors:
-  - pattern: "https://github.com/upstream/old-kb.git"
-    replace: "https://github.com/myorg/old-kb-fork.git"
-    fallback: false
-```
-
-**Example 4: Local development**
-```yaml
-# Use local filesystem mirrors for speed
-mirrors:
-  - pattern: "https://github.com/myorg/*"
-    replace: "file:///srv/git-mirrors/myorg/*"
-    fallback: true  # Fetch from github if local mirror stale
-```
-
-### Notes
-
-- Mirrors are transparent - lock file stores original URL, not mirror
-- Global mirrors can be configured in `~/.graft/config.yaml` (same format)
-- Project mirrors override global mirrors for matching patterns
-- If no pattern matches, original URL used
-
-See: [Decision 0007: Mirror and Offline Support](../decisions/decision-0007-mirror-support.md)
 
 ## Complete Example
 

@@ -274,12 +274,10 @@ The architecture is based on several key decisions:
 3. **[Decision 0003: Explicit Change Declarations](decisions/decision-0003-explicit-change-declarations.md)** - Changes in YAML, not parsed
 4. **[Decision 0004: Atomic Upgrades](decisions/decision-0004-atomic-upgrades.md)** - All-or-nothing upgrades, no partial states
 
-### Specification Format (v2.0 - 2026-01-05)
+### Specification Enhancements (2026-01-05)
 
 5. **[Decision 0005: Lock File Ordering Conventions](decisions/decision-0005-lock-file-ordering.md)** - Conventional ordering for readability
 6. **[Decision 0006: No Partial Resolution](decisions/decision-0006-no-partial-resolution.md)** - Maintain atomicity and reproducibility
-7. **[Decision 0007: Mirror Support](decisions/decision-0007-mirror-support.md)** - Enterprise-friendly URL rewriting
-8. **[Decision 0008: API Versioning](decisions/decision-0008-api-versioning.md)** - Kubernetes-style version semantics
 
 See [all decisions](decisions/) for complete list and rationale.
 

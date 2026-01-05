@@ -35,7 +35,7 @@ Each ADR follows a standard structure:
 - **[Decision 0004](./decision-0004-atomic-upgrades.md)**: Atomic Upgrades
   - All-or-nothing upgrade operations with rollback capability
 
-### Specification Format (v2.0 - 2026-01-05)
+### Specification Enhancements (2026-01-05)
 
 - **[Decision 0005](./decision-0005-lock-file-ordering.md)**: Lock File Ordering Conventions
   - SHOULD order: direct deps first, then transitive, alphabetically within groups
@@ -44,14 +44,6 @@ Each ADR follows a standard structure:
 - **[Decision 0006](./decision-0006-no-partial-resolution.md)**: No Partial Dependency Resolution
   - Explicitly reject partial resolution (violates atomicity & reproducibility)
   - Document rationale and alternatives
-
-- **[Decision 0007](./decision-0007-mirror-support.md)**: Mirror and Offline Support
-  - Add transparent URL rewriting for enterprise/air-gapped environments
-  - Pattern-based, fallback support, lock file transparency
-
-- **[Decision 0008](./decision-0008-api-versioning.md)**: API Versioning Semantics
-  - Kubernetes-style versioning (graft/v0, graft/v1)
-  - Clear stability guarantees and migration paths
 
 ## Status Legend
 

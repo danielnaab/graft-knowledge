@@ -9,24 +9,30 @@ Graft is a task runner and git-centered package manager that aims to simplify:
 - Git-based dependency management
 - Reproducible development workflows
 
-## Where to start
+## Documentation Structure
 
-- [Use Cases](use-cases.md) - What Graft enables and why
-- [Architecture](architecture.md) - System design and core concepts
-- [Specifications](specification/) - Formal specifications for implementers
-- [Decisions](decisions/) - Architecture Decision Records (ADRs)
-- [Work Logs](work-logs/) - Analysis and design evolution documentation
-- [Notes](../notes/) - Weekly notes and explorations
-- [Domain config](../knowledge-base.yaml) - KB configuration
+- **[Specifications](specification/)** - Formal specifications for implementers
+  - [Lock File Format](specification/lock-file-format.md) - State tracking format
+  - [graft.yaml Format](specification/graft-yaml-format.md) - Configuration file format
+  - [Core Operations](specification/core-operations.md) - Operation semantics and behavior
+  - [Change Model](specification/change-model.md) - Data model for changes
+  - [Dependency Layout](specification/dependency-layout.md) - How dependencies are organized
 
-## Latest Updates
+- **[Decisions](decisions/)** - Architecture Decision Records (ADRs)
+  - Documents key architectural choices with rationale
+  - Captures alternatives considered and trade-offs
 
-**2026-01-05**: Specification Enhancements
-- Added 1 new architectural decision (0005: No Partial Resolution)
-- Enhanced lock file format: ordering conventions with rationale
-- Added validation operations specification
-- See [Work Log](work-logs/2026-01-05-design-improvements-analysis.md) for analysis
+- **[Architecture](architecture.md)** - System design and core concepts overview
 
-## Status
+- **[Use Cases](use-cases.md)** - What Graft enables and why
 
-**Active Development** - Core specifications stabilized, reference implementation in progress.
+- **[Work Logs](work-logs/)** - Analysis and design evolution documentation
+
+- **[CHANGELOG](../CHANGELOG.md)** - Track specification changes and additions
+
+## For Implementers
+
+See [CHANGELOG](../CHANGELOG.md) for recent specification changes.
+
+Implement against a specific version by referencing the git commit or tag.
+See CHANGELOG for guidance on pinning implementations to specifications.

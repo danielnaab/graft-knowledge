@@ -205,8 +205,7 @@ node_modules/
 ```
 project/
 ├── graft.yaml       # Direct dependencies
-├── graft.lock       # Locked versions
-├── graft-tree.json  # Full dependency tree metadata
+├── graft.lock       # Extended: all resolved deps (direct + transitive)
 └── .graft/
     ├── meta-kb/         # Direct dep
     ├── standards-kb/    # meta-kb's dep (flattened)
@@ -216,10 +215,11 @@ project/
 **Pros:**
 - ✅ Short, predictable paths: `.graft/<name>/`
 - ✅ Efficient (deduplication)
-- ✅ Explicit (metadata shows tree)
+- ✅ Explicit (lock file shows all consumed deps)
 - ✅ No phantom dependencies
 - ✅ Tooling can validate and visualize
 - ✅ Conflict detection
+- ✅ Single source of truth (no separate tree file)
 
 **Cons:**
 - ⚠️ Requires dependency resolution algorithm
@@ -253,7 +253,7 @@ project/
 
 ---
 
-## Recommended Design: Flat Layout with Dependency Tree
+## Recommended Design: Flat Layout with Extended Lock File
 
 ### Core Design
 
@@ -261,15 +261,17 @@ project/
 ```
 project/
 ├── graft.yaml          # User-edited: direct dependencies
-├── graft.lock          # Auto-generated: locked versions
-├── graft-tree.json     # Auto-generated: full dependency tree
+├── graft.lock          # Auto-generated: ALL resolved deps (direct + transitive)
 └── .graft/
     ├── meta-kb/        # Dependency: cloned once, used everywhere
     ├── standards-kb/   # Transitive dep from meta-kb
     └── templates-kb/   # Transitive dep from standards-kb
 ```
 
-**Key Principle:** Remove `/deps/` subdirectory - it's superfluous. Place dependencies directly in `.graft/`.
+**Key Principles:**
+1. Remove `/deps/` subdirectory - it's superfluous. Place dependencies directly in `.graft/`.
+2. Lock file contains ALL resolved dependencies (not just direct ones)
+3. Single source of truth - no separate tree file needed
 
 ### File Formats
 
@@ -280,112 +282,153 @@ deps:
   meta-kb: "https://github.com/org/meta.git#v2.0.0"
 ```
 
-**graft.lock** (unchanged)
+**graft.lock** (EXTENDED - includes all resolved dependencies)
 ```yaml
 apiVersion: graft/v0
+
+# All resolved dependencies (direct + transitive)
+# Ordered for readability (direct first, then transitive alphabetically)
 dependencies:
   meta-kb:
     source: "https://github.com/org/meta.git"
     ref: "v2.0.0"
     commit: "abc123..."
     consumed_at: "2026-01-05T10:30:00Z"
+    direct: true              # NEW: Is this a direct dependency?
+    requires: ["standards-kb"] # NEW: What this dep needs (list of dep names)
+
+  standards-kb:
+    source: "https://github.com/org/standards.git"
+    ref: "v1.5.0"
+    commit: "def456..."
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: false
+    required_by: ["meta-kb"]  # NEW: Which deps need this (for auditing)
+    requires: ["templates-kb"]
+
+  templates-kb:
+    source: "https://github.com/org/templates.git"
+    ref: "v1.0.0"
+    commit: "ghi789..."
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: false
+    required_by: ["standards-kb"]
+    requires: []               # Leaf dependency
 ```
 
-**graft-tree.json** (NEW - full resolved tree)
-```json
-{
-  "version": "graft/v0",
-  "generated_at": "2026-01-05T10:30:00Z",
-  "tree": {
-    "meta-kb": {
-      "path": ".graft/meta-kb",
-      "source": "https://github.com/org/meta.git",
-      "ref": "v2.0.0",
-      "commit": "abc123...",
-      "direct": true,
-      "dependencies": {
-        "standards-kb": {
-          "path": ".graft/standards-kb",
-          "source": "https://github.com/org/standards.git",
-          "ref": "v1.5.0",
-          "commit": "def456...",
-          "direct": false,
-          "dependencies": {
-            "templates-kb": {
-              "path": ".graft/templates-kb",
-              "source": "https://github.com/org/templates.git",
-              "ref": "v1.0.0",
-              "commit": "ghi789...",
-              "direct": false,
-              "dependencies": {}
-            }
-          }
-        }
-      }
-    }
-  },
-  "flat_map": {
-    "meta-kb": ".graft/meta-kb",
-    "standards-kb": ".graft/standards-kb",
-    "templates-kb": ".graft/templates-kb"
-  }
-}
-```
+**Why this format?**
+
+1. **Single source of truth**: All consumed versions in one place
+2. **Follows conventions**: npm, yarn, poetry all include transitive deps in lock files
+3. **Enables features**:
+   - Upgrade preview: "Upgrading meta-kb will also update 2 transitive deps"
+   - Garbage collection: "templates-kb is no longer needed, remove from .graft/"
+   - Security auditing: "Check all consumed deps for vulnerabilities"
+   - Dependency visualization: Can reconstruct tree from requires/required_by
+4. **Reproducible**: Pins exact versions of ALL dependencies, not just direct
+5. **No redundant files**: Don't need separate tree metadata
 
 ### Dependency Resolution Algorithm
 
 ```python
+@dataclass
+class ResolvedDep:
+    source: str
+    ref: str
+    commit: str
+    consumed_at: str
+    direct: bool
+    requires: list[str]
+    required_by: list[str]
+
 def resolve_dependencies(
-    direct_deps: dict[str, str],
-    existing_resolutions: dict[str, LockEntry] = {}
-) -> dict[str, LockEntry]:
+    direct_deps: dict[str, str]
+) -> dict[str, ResolvedDep]:
     """
     Resolve all dependencies recursively with conflict detection.
 
-    Returns flat map of name -> LockEntry with full tree metadata.
+    Returns flat map of name -> ResolvedDep suitable for graft.lock.
     Raises ConflictError if incompatible versions required.
     """
-    resolved = {}
-    queue = [(name, url, is_direct=True) for name, url in direct_deps.items()]
+    resolved: dict[str, ResolvedDep] = {}
+    queue: list[tuple[str, str, bool, str | None]] = []
+
+    # Initialize queue with direct dependencies
+    for name, url in direct_deps.items():
+        queue.append((name, url, True, None))  # (name, url, is_direct, parent)
 
     while queue:
-        name, url, is_direct = queue.pop(0)
+        name, url, is_direct, parent = queue.pop(0)
 
-        # Skip if already resolved with same version
+        source = parse_source(url)  # Strip #ref
+        ref = parse_ref(url)        # Extract ref
+
+        # Check if already resolved
         if name in resolved:
             existing = resolved[name]
-            if existing.source == url and existing.ref == parse_ref(url):
+            if existing.source == source and existing.ref == ref:
+                # Same dep, same version - just update required_by
+                if parent and parent not in existing.required_by:
+                    existing.required_by.append(parent)
                 continue
             else:
                 # CONFLICT: same name, different version
                 raise ConflictError(
                     f"Dependency conflict: {name}\n"
-                    f"  Required: {url}\n"
-                    f"  Existing: {existing.source}#{existing.ref}"
+                    f"  Required by {parent}: {source}#{ref}\n"
+                    f"  Already resolved: {existing.source}#{existing.ref}\n"
+                    f"  Required by: {', '.join(existing.required_by)}"
                 )
 
-        # Clone/fetch dependency
+        # Clone/fetch dependency to .graft/<name>/
         dep_path = f".graft/{name}"
         clone_or_fetch(url, dep_path)
 
-        # Read its graft.yaml to find transitive deps
+        # Read its graft.yaml to find transitive dependencies
         dep_config = parse_config(f"{dep_path}/graft.yaml")
+        transitive_deps = dep_config.deps or {}
 
         # Record resolution
-        resolved[name] = LockEntry(
-            source=parse_source(url),
-            ref=parse_ref(url),
+        resolved[name] = ResolvedDep(
+            source=source,
+            ref=ref,
             commit=get_commit_sha(dep_path),
             consumed_at=now(),
             direct=is_direct,
-            dependencies=dep_config.deps
+            requires=list(transitive_deps.keys()),
+            required_by=[parent] if parent else []
         )
 
         # Add transitive deps to queue
-        for trans_name, trans_url in dep_config.deps.items():
-            queue.append((trans_name, trans_url, is_direct=False))
+        for trans_name, trans_url in transitive_deps.items():
+            queue.append((trans_name, trans_url, False, name))
 
     return resolved
+
+def write_lock_file(resolved: dict[str, ResolvedDep]) -> None:
+    """Write extended graft.lock with all resolved dependencies."""
+    lock_data = {
+        "apiVersion": "graft/v0",
+        "dependencies": {}
+    }
+
+    # Order: direct deps first, then transitive (alphabetically)
+    direct = {k: v for k, v in resolved.items() if v.direct}
+    transitive = {k: v for k, v in resolved.items() if not v.direct}
+
+    for deps in [direct, transitive]:
+        for name, dep in sorted(deps.items()):
+            lock_data["dependencies"][name] = {
+                "source": dep.source,
+                "ref": dep.ref,
+                "commit": dep.commit,
+                "consumed_at": dep.consumed_at,
+                "direct": dep.direct,
+                "requires": dep.requires,
+                "required_by": dep.required_by
+            }
+
+    write_yaml("graft.lock", lock_data)
 ```
 
 ### Conflict Handling
@@ -453,8 +496,9 @@ Result: CONFLICT
 ls .graft/
 # meta-kb  standards-kb  templates-kb
 
-# Tree structure is explicit
-cat graft-tree.json
+# All consumed versions in lock file
+cat graft.lock
+# Shows: meta-kb (direct), standards-kb (transitive), templates-kb (transitive)
 ```
 
 **No surprises:**
@@ -466,16 +510,16 @@ cat graft-tree.json
 
 **Validation:**
 ```bash
-# Check all deps match lock
-graft validate --check-tree
+# Check all deps match lock file
+graft validate --check-deps
 
-# Show full dependency tree
+# Show full dependency tree (reads from graft.lock)
 graft tree --show-all
 ```
 
 **Visualization:**
 ```bash
-# Graph the dependency tree
+# Graph the dependency tree (from graft.lock requires/required_by)
 graft tree --graph | dot -Tpng > deps.png
 ```
 
@@ -544,21 +588,23 @@ workspace/
 
 ### Phase 1: Core Resolution (Week 1)
 - [ ] Implement recursive dependency resolution algorithm
-- [ ] Generate graft-tree.json during `graft resolve`
+- [ ] Extend graft.lock format to include all resolved deps (direct + transitive)
+- [ ] Add `direct`, `requires`, `required_by` fields to lock entries
 - [ ] Support both `.graft/deps/` and `.graft/` layouts
 - [ ] Add conflict detection and clear error messages
 
 ### Phase 2: Migration Support (Week 2)
-- [ ] Add `graft migrate-layout` command
+- [ ] Add `graft migrate-layout` command to move deps from /deps/ to root
+- [ ] Update lock file reader/writer for new format (backward compatible)
 - [ ] Update all documentation
 - [ ] Add warnings for old layout
 - [ ] Create migration guide
 
 ### Phase 3: Tree Tooling (Week 3)
-- [ ] Add `graft tree` command to visualize dependencies
-- [ ] Add `graft validate --check-tree`
-- [ ] Add `graft analyze` for unused/cycle detection
-- [ ] Update lock file format to include transitive deps
+- [ ] Add `graft tree` command to visualize dependencies (reads from graft.lock)
+- [ ] Add `graft validate --check-deps` to verify lock matches .graft/
+- [ ] Add `graft analyze --unused` to find deps no longer needed
+- [ ] Add `graft analyze --cycles` to detect circular dependencies
 
 ### Phase 4: Optimization (Week 4)
 - [ ] Consider content-addressed storage for efficiency
@@ -602,12 +648,43 @@ deps:
 ```
 project/
 ├── graft.yaml
-├── graft.lock
-├── graft-tree.json
+├── graft.lock       # Extended: includes all 3 deps
 └── .graft/
     ├── meta-kb/
     ├── standards-kb/  (from meta-kb)
     └── templates-kb/  (from standards-kb)
+```
+
+**graft.lock contents:**
+```yaml
+apiVersion: graft/v0
+dependencies:
+  meta-kb:
+    source: "https://github.com/org/meta.git"
+    ref: "v2.0.0"
+    commit: "abc123..."
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: true
+    requires: ["standards-kb"]
+    required_by: []
+
+  standards-kb:
+    source: "https://github.com/org/standards.git"
+    ref: "v1.5.0"
+    commit: "def456..."
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: false
+    requires: ["templates-kb"]
+    required_by: ["meta-kb"]
+
+  templates-kb:
+    source: "https://github.com/org/templates.git"
+    ref: "v1.0.0"
+    commit: "ghi789..."
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: false
+    requires: []
+    required_by: ["standards-kb"]
 ```
 
 **Linking:**
@@ -665,31 +742,46 @@ project/
     └── templates-kb/  (shared - cloned once)
 ```
 
-**graft-tree.json shows sharing:**
-```json
-{
-  "tree": {
-    "meta-kb": {
-      "dependencies": {
-        "templates-kb": { "path": ".graft/templates-kb", "shared": true }
-      }
-    },
-    "docs-kb": {
-      "dependencies": {
-        "templates-kb": { "path": ".graft/templates-kb", "shared": true }
-      }
-    }
-  }
-}
+**graft.lock shows sharing via required_by:**
+```yaml
+apiVersion: graft/v0
+dependencies:
+  meta-kb:
+    direct: true
+    requires: ["standards-kb", "templates-kb"]
+    required_by: []
+
+  docs-kb:
+    direct: true
+    requires: ["templates-kb"]
+    required_by: []
+
+  standards-kb:
+    direct: false
+    requires: []
+    required_by: ["meta-kb"]
+
+  templates-kb:
+    direct: false
+    requires: []
+    required_by: ["meta-kb", "docs-kb"]  # Shared by both!
 ```
+
+**Key insight:** When `templates-kb` appears in multiple `required_by` lists, it's a shared dependency cloned only once.
 
 ---
 
 ## Changelog
 
-- **2026-01-05**: Initial draft (v2 design)
+- **2026-01-05 (v2.1)**: Simplified to use extended graft.lock
+  - Removed graft-tree.json (redundant metadata file)
+  - Extended graft.lock to include all resolved dependencies
+  - Added fields: `direct`, `requires`, `required_by`
+  - Follows npm/yarn/poetry conventions (transitive deps in lock)
+  - Updated all examples and algorithm
+
+- **2026-01-05 (v2.0)**: Initial draft
   - Analyzed consumption patterns
   - Evaluated recursive dependency strategies
   - Proposed flat layout with explicit resolution
-  - Defined graft-tree.json format
   - Planned migration path

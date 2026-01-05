@@ -1,18 +1,20 @@
 ---
 title: "Lock File Format Specification"
-date: 2026-01-01
+date: 2026-01-05
 status: draft
+version: 2.0
 ---
 
 # Lock File Format Specification
 
 ## Overview
 
-The `graft.lock` file tracks the exact state of consumed dependencies. It records:
-- Which dependencies are being used
+The `graft.lock` file tracks the exact state of **all** consumed dependencies (both direct and transitive). It records:
+- Which dependencies are being used (direct and transitive)
 - What version (git ref) has been consumed
 - Resolved commit hash for integrity
-- When the dependency was last updated
+- Dependency relationships (requires/required_by)
+- When each dependency was last updated
 
 This file should be committed to version control to ensure reproducible dependency states across environments.
 
@@ -30,27 +32,31 @@ project-root/
 
 The lock file serves several purposes:
 
-1. **State tracking**: Records which version has been consumed
+1. **Complete state tracking**: Records ALL dependencies (direct + transitive) and their versions
 2. **Reproducibility**: Enables identical dependency states across machines
-3. **Integrity**: Stores commit hash to detect tampering
-4. **History**: Can be tracked in git to see dependency evolution
-5. **Atomicity**: Updated only when upgrade fully succeeds
+3. **Integrity**: Stores commit hashes to detect tampering
+4. **Dependency graph**: Tracks relationships via requires/required_by fields
+5. **History**: Can be tracked in git to see dependency evolution
+6. **Atomicity**: Updated only when upgrade fully succeeds
+7. **Garbage collection**: Identifies which deps are no longer needed
 
 ## Schema
 
 ### Top-Level Structure
 
 ```yaml
-# Lock file format version
-version: 1
+apiVersion: graft/v0
 
-# Dependency states
+# All resolved dependencies (direct + transitive)
 dependencies:
   <dep-name>:
     source: string           # Git URL or path
     ref: string              # Consumed git ref (tag, branch, commit)
-    commit: string           # Resolved commit hash
+    commit: string           # Resolved commit hash (SHA-1)
     consumed_at: datetime    # ISO 8601 timestamp
+    direct: boolean          # Is this a direct dependency?
+    requires: [string]       # List of dependencies this dep needs
+    required_by: [string]    # List of dependencies that need this dep
 ```
 
 ## Section: dependencies
@@ -120,30 +126,142 @@ consumed_at: "2026-01-01T10:30:00Z"
 consumed_at: "2026-01-01T10:30:00.123456+00:00"
 ```
 
+#### direct (required)
+**Type**: `boolean`
+
+**Description**: Whether this is a direct dependency (declared in graft.yaml) or transitive (required by another dependency).
+
+**Values**:
+- `true`: Direct dependency (declared in consumer's graft.yaml)
+- `false`: Transitive dependency (pulled in by another dep)
+
+**Purpose**:
+- Distinguish between deps you declared vs deps that are pulled in
+- Enable filtering (e.g., "show only my direct deps")
+- Guide upgrade decisions (direct deps vs transitive)
+
+**Example**:
+```yaml
+direct: true   # You declared this
+direct: false  # Pulled in transitively
+```
+
+#### requires (required)
+**Type**: `list[string]`
+
+**Description**: List of dependency names that this dependency requires (its own dependencies from its graft.yaml).
+
+**Values**: List of dependency names, empty list if leaf dependency
+
+**Purpose**:
+- Reconstruct dependency tree
+- Understand dependency chains
+- Detect circular dependencies
+- Plan upgrade impact
+
+**Example**:
+```yaml
+requires: ["standards-kb", "templates-kb"]  # This dep needs these
+requires: []                                  # Leaf dependency
+```
+
+#### required_by (required)
+**Type**: `list[string]`
+
+**Description**: List of dependency names that require this dependency.
+
+**Values**: List of dependency names, empty list for direct dependencies
+
+**Purpose**:
+- Identify shared dependencies (multiple entries)
+- Garbage collection (no entries means unused)
+- Impact analysis ("what depends on this?")
+- Upgrade planning
+
+**Example**:
+```yaml
+required_by: []                   # Direct dep (nothing requires it from us)
+required_by: ["meta-kb"]          # Only meta-kb needs this
+required_by: ["meta-kb", "docs-kb"]  # Shared by both!
+```
+
 ## Complete Example
 
+### Simple Project (one direct dep with transitive deps)
+
 ```yaml
-version: 1
+apiVersion: graft/v0
 
 dependencies:
+  # Direct dependency
   meta-knowledge-base:
     source: "git@github.com:org/meta-kb.git"
-    ref: "v1.5.0"
-    commit: "abc123def456789012345678901234567890abcd"
-    consumed_at: "2026-01-01T10:30:00Z"
-
-  shared-utils:
-    source: "../shared-utils"
     ref: "v2.0.0"
-    commit: "def456abc123789012345678901234567890abcd"
-    consumed_at: "2025-12-15T14:20:00Z"
+    commit: "abc123def456789012345678901234567890abcd"
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: true
+    requires: ["standards-kb"]
+    required_by: []
 
-  auth-library:
-    source: "https://github.com/org/auth-lib.git"
-    ref: "main"
+  # Transitive dependency (from meta-kb)
+  standards-kb:
+    source: "https://github.com/org/standards.git"
+    ref: "v1.5.0"
+    commit: "def456abc123789012345678901234567890abcd"
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: false
+    requires: ["templates-kb"]
+    required_by: ["meta-knowledge-base"]
+
+  # Transitive dependency (from standards-kb)
+  templates-kb:
+    source: "https://github.com/org/templates.git"
+    ref: "v1.0.0"
     commit: "789abc456def012345678901234567890abcdef12"
-    consumed_at: "2026-01-01T09:00:00Z"
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: false
+    requires: []
+    required_by: ["standards-kb"]
 ```
+
+### Complex Project (shared dependencies)
+
+```yaml
+apiVersion: graft/v0
+
+dependencies:
+  # Direct dependency #1
+  meta-kb:
+    source: "git@github.com:org/meta-kb.git"
+    ref: "v2.0.0"
+    commit: "abc123..."
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: true
+    requires: ["templates-kb"]
+    required_by: []
+
+  # Direct dependency #2
+  docs-kb:
+    source: "git@github.com:org/docs-kb.git"
+    ref: "v1.0.0"
+    commit: "bcd234..."
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: true
+    requires: ["templates-kb"]
+    required_by: []
+
+  # Shared transitive dependency
+  templates-kb:
+    source: "https://github.com/org/templates.git"
+    ref: "v1.0.0"
+    commit: "def456..."
+    consumed_at: "2026-01-05T10:30:00Z"
+    direct: false
+    requires: []
+    required_by: ["meta-kb", "docs-kb"]  # Shared!
+```
+
+**Note:** `templates-kb` appears in multiple `required_by` lists, indicating it's shared.
 
 ## Lifecycle
 
@@ -359,9 +477,9 @@ Dependencies:
 
 # Validate lock file
 $ graft validate --lock
-✓ Lock file is valid
-✓ All commits verified
-✓ No integrity issues
+Lock file is valid
+All commits verified
+No integrity issues
 ```
 
 ## Git Integration
@@ -371,7 +489,7 @@ The lock file should be committed to git:
 ```bash
 # After upgrade
 $ graft upgrade meta-kb --to v2.0.0
-✓ Upgraded meta-kb to v2.0.0
+Upgraded meta-kb to v2.0.0
 
 $ git status
 modified:   graft.lock
@@ -406,7 +524,7 @@ dependencies:
 **Detection**:
 ```bash
 $ graft validate --lock
-⚠ Warning: meta-kb ref 'main' has moved
+Warning: meta-kb ref 'main' has moved
   Lock file: abc123
   Current:   def456
   Run 'graft upgrade meta-kb' to update
@@ -429,7 +547,7 @@ dependencies:
 **Detection**:
 ```bash
 $ graft validate --lock
-✗ Error: meta-kb ref 'feature-branch' does not exist
+Error: meta-kb ref 'feature-branch' does not exist
   Commit abc123 is still accessible
   Consider updating to a stable ref (tag or main)
 ```
@@ -449,7 +567,7 @@ source: "git@github.com:new-org/repo.git"
 **Detection**:
 ```bash
 $ graft validate
-⚠ Warning: meta-kb source URL differs between graft.yaml and graft.lock
+Warning: meta-kb source URL differs between graft.yaml and graft.lock
   Lock: git@github.com:old-org/repo.git
   Config: git@github.com:new-org/repo.git
 ```

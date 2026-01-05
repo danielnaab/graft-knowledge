@@ -336,6 +336,296 @@ def fetch(dep_name: Optional[str] = None):
 
 ---
 
+## Validation Operations
+
+### graft validate
+
+**Purpose**: Validate graft configuration files and dependency integrity.
+
+**Syntax**:
+```bash
+graft validate [mode] [options]
+```
+
+**Modes**:
+- `config` - Validate graft.yaml syntax and semantics
+- `lock` - Validate graft.lock format and consistency
+- `integrity` - Verify .graft/ directory matches lock file
+- `all` - Run all validations (default)
+
+**Options**:
+- `--json`: Output as JSON
+- `--fix`: Attempt to fix issues automatically (where possible)
+
+**Behavior**:
+
+**Mode: config**
+1. Parse graft.yaml as YAML
+2. Check required fields present
+3. Validate git URLs format
+4. Check command references are valid
+5. Validate mirror patterns (if present)
+
+**Mode: lock**
+1. Parse graft.lock as YAML
+2. Check apiVersion is supported
+3. Validate all required fields present
+4. Check commit hash format (40-char hex)
+5. Validate timestamp format (ISO 8601)
+6. Verify dependency graph consistency (requires/required_by)
+
+**Mode: integrity**
+1. For each dependency in lock file:
+   - Check .graft/<dep-name>/ exists
+   - Run `git rev-parse HEAD` in repository
+   - Compare to commit hash in lock file
+   - Report any mismatches
+
+**Exit codes**:
+- `0` - All validations passed
+- `1` - Validation failed (invalid configuration)
+- `2` - Integrity mismatch (lock vs .graft/)
+
+**Output** (text):
+```
+✓ Config validation passed
+  - graft.yaml is valid YAML
+  - All dependencies have valid sources
+  - All command references valid
+
+✓ Lock file validation passed
+  - graft.lock format is valid (apiVersion: graft/v0)
+  - All required fields present
+  - Dependency graph consistent
+
+✓ Integrity verification passed
+  - meta-kb: commit matches (abc123...)
+  - standards-kb: commit matches (def456...)
+
+All validations passed ✓
+```
+
+**Output** (errors):
+```
+✗ Config validation failed
+  - Line 15: Invalid git URL 'not-a-url'
+  - Line 23: Command 'migrate-v3' referenced but not defined
+
+✗ Lock file validation failed
+  - Dependency 'meta-kb': missing 'commit' field
+  - Dependency 'standards-kb': invalid commit hash 'not-a-hash'
+
+✗ Integrity verification failed
+  - templates-kb: Expected abc123..., found def456...
+    Run 'graft resolve' to sync
+
+3 validation failures
+```
+
+**Output** (JSON):
+```json
+{
+  "config": {
+    "valid": false,
+    "errors": [
+      {
+        "line": 15,
+        "message": "Invalid git URL 'not-a-url'"
+      }
+    ]
+  },
+  "lock": {
+    "valid": true,
+    "errors": []
+  },
+  "integrity": {
+    "valid": true,
+    "mismatches": []
+  },
+  "overall": "failed"
+}
+```
+
+**Implementation**:
+```python
+def validate(mode: str = "all", json_output: bool = False) -> int:
+    """
+    Validate graft configuration and state.
+    Returns exit code.
+    """
+    results = {}
+
+    if mode in ["all", "config"]:
+        results["config"] = validate_config()
+
+    if mode in ["all", "lock"]:
+        results["lock"] = validate_lock_file()
+
+    if mode in ["all", "integrity"]:
+        results["integrity"] = validate_integrity()
+
+    if json_output:
+        print(json.dumps(results))
+    else:
+        print_validation_results(results)
+
+    # Determine exit code
+    if any(not r["valid"] for r in results.values()):
+        return 1 if "config" in results or "lock" in results else 2
+
+    return 0
+
+def validate_config() -> dict:
+    """Validate graft.yaml."""
+    errors = []
+
+    try:
+        config = yaml.safe_load(open("graft.yaml"))
+    except yaml.YAMLError as e:
+        return {"valid": False, "errors": [{"message": f"Invalid YAML: {e}"}]}
+
+    # Check dependencies
+    if "dependencies" in config:
+        for name, dep in config["dependencies"].items():
+            if "source" not in dep:
+                errors.append({"message": f"Dependency '{name}': missing 'source'"})
+            elif not is_valid_git_url(dep["source"]):
+                errors.append({"message": f"Dependency '{name}': invalid git URL"})
+
+    # Check commands
+    if "commands" in config:
+        for cmd_name, cmd in config["commands"].items():
+            if "run" not in cmd:
+                errors.append({"message": f"Command '{cmd_name}': missing 'run'"})
+
+    # Check mirrors
+    if "mirrors" in config:
+        for i, mirror in enumerate(config["mirrors"]):
+            if "pattern" not in mirror:
+                errors.append({"message": f"Mirror {i}: missing 'pattern'"})
+            if "replace" not in mirror:
+                errors.append({"message": f"Mirror {i}: missing 'replace'"})
+
+    return {"valid": len(errors) == 0, "errors": errors}
+
+def validate_lock_file() -> dict:
+    """Validate graft.lock."""
+    errors = []
+
+    try:
+        lock = yaml.safe_load(open("graft.lock"))
+    except FileNotFoundError:
+        return {"valid": False, "errors": [{"message": "graft.lock not found"}]}
+    except yaml.YAMLError as e:
+        return {"valid": False, "errors": [{"message": f"Invalid YAML: {e}"}]}
+
+    # Check apiVersion
+    if "apiVersion" not in lock:
+        errors.append({"message": "Missing 'apiVersion' field"})
+    elif lock["apiVersion"] not in ["graft/v0", "graft/v1"]:
+        errors.append({"message": f"Unsupported apiVersion: {lock['apiVersion']}"})
+
+    # Check dependencies
+    if "dependencies" not in lock:
+        errors.append({"message": "Missing 'dependencies' section"})
+    else:
+        for name, dep in lock["dependencies"].items():
+            # Required fields
+            for field in ["source", "ref", "commit", "consumed_at", "direct", "requires", "required_by"]:
+                if field not in dep:
+                    errors.append({"message": f"Dependency '{name}': missing '{field}'"})
+
+            # Validate commit hash
+            if "commit" in dep and not re.match(r"^[0-9a-f]{40}$", dep["commit"]):
+                errors.append({"message": f"Dependency '{name}': invalid commit hash"})
+
+            # Validate timestamp
+            if "consumed_at" in dep:
+                try:
+                    datetime.fromisoformat(dep["consumed_at"].replace("Z", "+00:00"))
+                except ValueError:
+                    errors.append({"message": f"Dependency '{name}': invalid timestamp"})
+
+    return {"valid": len(errors) == 0, "errors": errors}
+
+def validate_integrity() -> dict:
+    """Validate .graft/ directory matches lock file."""
+    mismatches = []
+
+    lock = yaml.safe_load(open("graft.lock"))
+
+    for name, dep in lock.get("dependencies", {}).items():
+        dep_path = f".graft/{name}"
+
+        if not os.path.exists(dep_path):
+            mismatches.append({
+                "dependency": name,
+                "error": "Directory not found",
+                "expected": dep["commit"]
+            })
+            continue
+
+        # Get actual commit
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=dep_path,
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            mismatches.append({
+                "dependency": name,
+                "error": "Not a git repository"
+            })
+            continue
+
+        actual_commit = result.stdout.strip()
+        expected_commit = dep["commit"]
+
+        if actual_commit != expected_commit:
+            mismatches.append({
+                "dependency": name,
+                "expected": expected_commit,
+                "actual": actual_commit
+            })
+
+    return {"valid": len(mismatches) == 0, "mismatches": mismatches}
+```
+
+**Use Cases**:
+
+1. **Pre-commit hook**:
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+graft validate config lock
+if [ $? -ne 0 ]; then
+  echo "Graft validation failed. Fix errors before committing."
+  exit 1
+fi
+```
+
+2. **CI/CD pipeline**:
+```yaml
+# .github/workflows/validate.yml
+- name: Validate Graft config
+  run: graft validate --json
+```
+
+3. **Debug integrity issues**:
+```bash
+# Check if local .graft/ is in sync
+graft validate integrity
+
+# If mismatch, re-resolve
+graft resolve
+```
+
+See: [Recommendation #2: Add graft validate Command](../../graft/docs/plans/graft-improvements-recommendations.md#recommendation-2-add-graft-validate-command)
+
+---
+
 ## Mutation Operations
 
 ### graft upgrade

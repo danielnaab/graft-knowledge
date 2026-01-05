@@ -59,9 +59,74 @@ dependencies:
     required_by: [string]    # List of dependencies that need this dep
 ```
 
+### API Version
+
+**Field**: `apiVersion` (required)
+
+**Type**: `string`
+
+**Description**: Specifies the lock file format version. This follows a similar pattern to Kubernetes API versioning.
+
+**Format**: `graft/v{N}` where N is the major version number
+
+**Semantics**:
+
+- **`graft/v0`** - Experimental/preview format
+  - Breaking changes MAY occur between v0 releases
+  - Used during initial Graft development
+  - Signals to tooling: "expect changes"
+
+- **`graft/v1`** (future) - First stable format
+  - Breaking changes MUST NOT occur within v1.x releases
+  - Backward compatible additions allowed (new optional fields)
+  - Tools supporting v1 MUST handle all v1.x formats
+
+- **`graft/v2`** (future) - Second major version
+  - Signals breaking changes from v1
+  - Migration tooling SHOULD be provided
+
+**Version compatibility**:
+- Tools MUST reject lock files with unsupported apiVersion
+- Tools SHOULD provide clear error messages suggesting upgrade
+- Tools MAY support multiple versions simultaneously
+
+**Example**:
+```yaml
+apiVersion: graft/v0  # Current experimental format
+```
+
+See: [Decision 0008: API Versioning Semantics](../decisions/decision-0008-api-versioning.md)
+
 ## Section: dependencies
 
 Maps dependency names to their current state.
+
+### Ordering Convention
+
+**Specification**: Dependencies SHOULD be ordered as follows:
+
+1. **Direct dependencies first** - All dependencies with `direct: true`
+2. **Transitive dependencies second** - All dependencies with `direct: false`
+3. **Alphabetically within groups** - Within each group, sort by dependency name
+
+**Rationale**: This conventional ordering improves human readability and makes git diffs more meaningful when dependencies change.
+
+**Example**:
+```yaml
+dependencies:
+  # Direct dependencies (alphabetical)
+  docs-kb: {...}
+  meta-kb: {...}
+
+  # Transitive dependencies (alphabetical)
+  standards-kb: {...}
+  templates-kb: {...}
+  utils-kb: {...}
+```
+
+**Note**: While this ordering is RECOMMENDED for generated lock files, parsers MUST accept dependencies in any order. This allows hand-editing when necessary without breaking validation.
+
+See: [Decision 0005: Lock File Ordering Conventions](../decisions/decision-0005-lock-file-ordering.md)
 
 ### Fields
 

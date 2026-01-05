@@ -13,10 +13,19 @@ Graft is a task runner and git-centered package manager that aims to simplify:
 
 - [Use Cases](use-cases.md) - What Graft enables and why
 - [Architecture](architecture.md) - System design and core concepts
+- [Specifications](specification/) - Formal specifications for implementers
 - [Decisions](decisions/) - Architecture Decision Records (ADRs)
+- [Work Logs](work-logs/) - Analysis and design evolution documentation
 - [Notes](../notes/) - Weekly notes and explorations
 - [Domain config](../knowledge-base.yaml) - KB configuration
 
+## Latest Updates
+
+**2026-01-05**: Specification v2.0 - Design Improvements
+- Added 4 new architectural decisions (0005-0008)
+- Enhanced specifications: lock file ordering, API versioning, mirrors, validation
+- See [Work Log](work-logs/2026-01-05-design-improvements-analysis.md) for details
+
 ## Status
 
-This knowledge base is in early development. Core architecture and initial scope are being established.
+**Active Development** - Core specifications stabilized, reference implementation in progress.

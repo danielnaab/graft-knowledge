@@ -1,0 +1,82 @@
+# Architectural Decision Records
+
+This directory contains Architectural Decision Records (ADRs) documenting key design decisions for Graft.
+
+## Purpose
+
+ADRs provide:
+- **Context** - What situation led to the decision
+- **Decision** - What was decided
+- **Rationale** - Why this decision was made
+- **Alternatives** - What other options were considered
+- **Consequences** - What are the impacts (positive and negative)
+
+## Format
+
+Each ADR follows a standard structure:
+- Title: "Decision NNNN: Brief Title"
+- Date: When the decision was made
+- Status: accepted | rejected | superseded | deprecated
+- Context, Decision, Rationale, Alternatives, Consequences, Related
+
+## Decisions
+
+### Core Architecture
+
+- **[Decision 0001](./decision-0001-initial-scope.md)**: Initial Scope
+  - Defines Graft as task runner + dependency manager for knowledge bases
+
+- **[Decision 0002](./decision-0002-git-refs-over-semver.md)**: Git Refs Over Semver
+  - Use git refs as identity, don't require semantic versioning
+
+- **[Decision 0003](./decision-0003-explicit-change-declarations.md)**: Explicit Change Declarations
+  - Changes defined in structured YAML, not parsed from markdown
+
+- **[Decision 0004](./decision-0004-atomic-upgrades.md)**: Atomic Upgrades
+  - All-or-nothing upgrade operations with rollback capability
+
+### Specification Format (v2.0 - 2026-01-05)
+
+- **[Decision 0005](./decision-0005-lock-file-ordering.md)**: Lock File Ordering Conventions
+  - SHOULD order: direct deps first, then transitive, alphabetically within groups
+  - Rationale: Readability, git-friendliness, consistency
+
+- **[Decision 0006](./decision-0006-no-partial-resolution.md)**: No Partial Dependency Resolution
+  - Explicitly reject partial resolution (violates atomicity & reproducibility)
+  - Document rationale and alternatives
+
+- **[Decision 0007](./decision-0007-mirror-support.md)**: Mirror and Offline Support
+  - Add transparent URL rewriting for enterprise/air-gapped environments
+  - Pattern-based, fallback support, lock file transparency
+
+- **[Decision 0008](./decision-0008-api-versioning.md)**: API Versioning Semantics
+  - Kubernetes-style versioning (graft/v0, graft/v1)
+  - Clear stability guarantees and migration paths
+
+## Status Legend
+
+- **accepted** - Decision is active and should be followed
+- **rejected** - Decision was considered but not adopted (documents rationale)
+- **superseded** - Decision replaced by a newer decision (references replacement)
+- **deprecated** - Decision is being phased out (documents timeline)
+
+## Creating New ADRs
+
+When making significant architectural decisions:
+
+1. Create new file: `decision-NNNN-brief-title.md`
+2. Use next sequential number
+3. Follow the standard format (see existing ADRs)
+4. Link from relevant specifications
+5. Update this README
+
+## Related
+
+- [Work Logs](../work-logs/) - Detailed analysis and process documentation
+- [Specifications](../specification/) - Formal specifications implementing these decisions
+- [Architecture Overview](../architecture.md) - High-level architecture
+
+## References
+
+- **ADR concept**: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
+- **ADR templates**: https://github.com/joelparkerhenderson/architecture-decision-record

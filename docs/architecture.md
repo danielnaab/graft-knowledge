@@ -267,10 +267,21 @@ Consumer Repository:
 
 The architecture is based on several key decisions:
 
+### Core Architecture (v1.0)
+
 1. **[Decision 0001: Initial Scope](decisions/decision-0001-initial-scope.md)** - Define Graft as task runner + dependency manager
 2. **[Decision 0002: Git Refs Over Semver](decisions/decision-0002-git-refs-over-semver.md)** - Use git refs, don't require semver
 3. **[Decision 0003: Explicit Change Declarations](decisions/decision-0003-explicit-change-declarations.md)** - Changes in YAML, not parsed
 4. **[Decision 0004: Atomic Upgrades](decisions/decision-0004-atomic-upgrades.md)** - All-or-nothing upgrades, no partial states
+
+### Specification Format (v2.0 - 2026-01-05)
+
+5. **[Decision 0005: Lock File Ordering Conventions](decisions/decision-0005-lock-file-ordering.md)** - Conventional ordering for readability
+6. **[Decision 0006: No Partial Resolution](decisions/decision-0006-no-partial-resolution.md)** - Maintain atomicity and reproducibility
+7. **[Decision 0007: Mirror Support](decisions/decision-0007-mirror-support.md)** - Enterprise-friendly URL rewriting
+8. **[Decision 0008: API Versioning](decisions/decision-0008-api-versioning.md)** - Kubernetes-style version semantics
+
+See [all decisions](decisions/) for complete list and rationale.
 
 ## Implementation Specifications
 
@@ -325,10 +336,11 @@ Running verification...
 ## Open Questions
 
 - Caching strategy for fetched dependencies
-- Transitive dependency handling
+- ~~Transitive dependency handling~~ ✅ Resolved (v2.0 - flat layout with extended lock file)
 - Multi-version upgrade paths (v1 → v2 → v3)
 - Parallel command execution
 - Cross-platform compatibility (Windows, macOS, Linux)
+- Workspace/monorepo support (deferred - see Decision 0006)
 
 ## Related
 

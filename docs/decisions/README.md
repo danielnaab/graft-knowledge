@@ -41,6 +41,10 @@ Each ADR follows a standard structure:
   - Explicitly reject partial resolution (violates atomicity & reproducibility)
   - Document rationale and alternatives
 
+- **[Decision 0006](./decision-0006-dependency-update-events.md)**: Dependency Update Event Strategy
+  - Use org-wide push events with polling fallback for update notification
+  - Zero upstream configuration—leverage existing graft.yaml declarations
+
 **Note**: Lock file ordering conventions are specified inline in the [Lock File Format specification](../specification/lock-file-format.md#ordering-convention) rather than as a separate ADR, as they represent a formatting convention rather than an architectural decision.
 
 ## Status Legend

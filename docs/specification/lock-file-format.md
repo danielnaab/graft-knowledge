@@ -59,9 +59,59 @@ dependencies:
     required_by: [string]    # List of dependencies that need this dep
 ```
 
+### API Version
+
+**Field**: `apiVersion` (required)
+
+**Type**: `string`
+
+**Description**: Identifies the lock file format version.
+
+**Current value**: `graft/v0`
+
+**Example**:
+```yaml
+apiVersion: graft/v0
+```
+
+**Note**: Currently in initial development phase. Format may evolve. Future versions will use `graft/v1`, `graft/v2`, etc. when the specification stabilizes.
+
 ## Section: dependencies
 
 Maps dependency names to their current state.
+
+### Ordering Convention
+
+**Specification**: Dependencies SHOULD be ordered as follows:
+
+1. **Direct dependencies first** - All dependencies with `direct: true`
+2. **Transitive dependencies second** - All dependencies with `direct: false`
+3. **Alphabetically within groups** - Within each group, sort by dependency name
+
+**Rationale**:
+- **Improved readability** - Users can quickly identify which dependencies they declared vs. pulled in transitively
+- **Meaningful git diffs** - Changes group together logically, making dependency evolution clearer
+- **Consistency across tools** - All implementations generate lock files in the same order, reducing churn
+
+**Flexibility**: Parsers MUST accept dependencies in any order to allow:
+- Hand-editing when necessary (emergency fixes, manual conflict resolution)
+- Backward compatibility with lock files generated before this convention
+- Tool flexibility and experimentation
+
+**Example**:
+```yaml
+dependencies:
+  # Direct dependencies (alphabetical)
+  docs-kb: {...}
+  meta-kb: {...}
+
+  # Transitive dependencies (alphabetical)
+  standards-kb: {...}
+  templates-kb: {...}
+  utils-kb: {...}
+```
+
+**Implementation guideline**: "Be strict in what you generate, liberal in what you accept" (Robustness Principle)
 
 ### Fields
 

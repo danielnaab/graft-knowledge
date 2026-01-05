@@ -60,39 +60,6 @@ Dependencies:
 }
 ```
 
-**Implementation**:
-```python
-def status(dep_name: Optional[str] = None, check_updates: bool = False) -> dict:
-    """Show dependency status."""
-    lock = read_lock_file()
-    results = {}
-
-    deps = [dep_name] if dep_name else lock['dependencies'].keys()
-
-    for dep in deps:
-        dep_data = lock['dependencies'][dep]
-        current_ref = dep_data['ref']
-
-        result = {
-            'current': current_ref,
-            'consumed_at': dep_data['consumed_at'],
-            'available': None,
-            'pending_changes': 0
-        }
-
-        if check_updates:
-            # Fetch latest from upstream
-            latest_ref = get_latest_ref(dep)
-            if latest_ref != current_ref:
-                result['available'] = latest_ref
-                result['pending_changes'] = count_changes_between(
-                    dep, current_ref, latest_ref
-                )
-
-        results[dep] = result
-
-    return results
-```
 
 ---
 
@@ -159,40 +126,6 @@ v1.6.0 (feature)
 }
 ```
 
-**Implementation**:
-```python
-def changes(
-    dep_name: str,
-    from_ref: Optional[str] = None,
-    to_ref: Optional[str] = None,
-    change_type: Optional[str] = None,
-    breaking_only: bool = False
-) -> list[Change]:
-    """List changes for a dependency."""
-
-    # Get current consumed version if not specified
-    if from_ref is None:
-        lock = read_lock_file()
-        from_ref = lock['dependencies'][dep_name]['ref']
-
-    # Get latest version if not specified
-    if to_ref is None:
-        to_ref = get_latest_ref(dep_name)
-
-    # Load changes from dependency's graft.yaml
-    all_changes = load_changes(dep_name)
-
-    # Filter to range
-    changes_in_range = filter_changes_between(all_changes, from_ref, to_ref)
-
-    # Filter by type
-    if breaking_only:
-        changes_in_range = [c for c in changes_in_range if c.type == 'breaking']
-    elif change_type:
-        changes_in_range = [c for c in changes_in_range if c.type == change_type]
-
-    return changes_in_range
-```
 
 ---
 
@@ -253,38 +186,6 @@ See CHANGELOG.md for full details and rationale.
 }
 ```
 
-**Implementation**:
-```python
-def show(dep_name: str, ref: str) -> dict:
-    """Show details of a specific change."""
-    config = load_graft_yaml(dep_name)
-
-    # Get change
-    change_data = config.get('changes', {}).get(ref)
-    if not change_data:
-        raise ValueError(f"Change {ref} not found for {dep_name}")
-
-    change = Change(ref=ref, **change_data)
-
-    # Get command details
-    result = {
-        'ref': change.ref,
-        'type': change.type,
-        'description': change.description,
-        'migration': change.migration,
-        'verify': change.verify
-    }
-
-    # Add command details
-    commands = config.get('commands', {})
-    if change.migration and change.migration in commands:
-        result['migration_command'] = commands[change.migration]
-
-    if change.verify and change.verify in commands:
-        result['verify_command'] = commands[change.verify]
-
-    return result
-```
 
 ---
 
@@ -314,24 +215,158 @@ Fetching shared-utils...
   Latest: v2.1.0
 ```
 
-**Implementation**:
-```python
-def fetch(dep_name: Optional[str] = None):
-    """Fetch latest from upstream."""
-    lock = read_lock_file()
 
-    deps = [dep_name] if dep_name else lock['dependencies'].keys()
+---
 
-    for dep in deps:
-        source = lock['dependencies'][dep]['source']
+## Validation Operations
 
-        # Fetch from git remote
-        subprocess.run(['git', 'fetch'], cwd=get_dep_cache_path(dep))
+### graft validate
 
-        # Update local metadata
-        update_dep_cache(dep)
+**Purpose**: Validate graft configuration files and dependency integrity.
 
-        print(f"✓ Fetched {dep}")
+**Syntax**:
+```bash
+graft validate [mode] [options]
+```
+
+**Modes**:
+- `config` - Validate graft.yaml syntax and semantics
+- `lock` - Validate graft.lock format and consistency
+- `integrity` - Verify .graft/ directory matches lock file
+- `all` - Run all validations (default)
+
+**Options**:
+- `--json`: Output as JSON
+- `--fix`: Attempt to fix issues automatically (where possible)
+
+**Behavior**:
+
+**Mode: config**
+1. Parse graft.yaml as YAML
+2. Check required fields present
+3. Validate git URLs format
+4. Check command references are valid
+
+**Mode: lock**
+1. Parse graft.lock as YAML
+2. Check apiVersion is supported
+3. Validate all required fields present
+4. Check commit hash format (40-char hex)
+5. Validate timestamp format (ISO 8601)
+6. Verify dependency graph consistency (requires/required_by)
+
+**Mode: integrity**
+1. For each dependency in lock file:
+   - Check .graft/<dep-name>/ exists
+   - Run `git rev-parse HEAD` in repository
+   - Compare to commit hash in lock file
+   - Report any mismatches
+
+**Exit codes**:
+- `0` - All validations passed
+- `1` - Validation failed (invalid configuration)
+- `2` - Integrity mismatch (lock vs .graft/)
+
+**Output** (text):
+```
+✓ Config validation passed
+  - graft.yaml is valid YAML
+  - All dependencies have valid sources
+  - All command references valid
+
+✓ Lock file validation passed
+  - graft.lock format is valid (apiVersion: graft/v0)
+  - All required fields present
+  - Dependency graph consistent
+
+✓ Integrity verification passed
+  - meta-kb: commit matches (abc123...)
+  - standards-kb: commit matches (def456...)
+
+All validations passed ✓
+```
+
+**Output** (errors):
+```
+✗ Config validation failed
+  - Line 15: Invalid git URL 'not-a-url'
+  - Line 23: Command 'migrate-v3' referenced but not defined
+
+✗ Lock file validation failed
+  - Dependency 'meta-kb': missing 'commit' field
+  - Dependency 'standards-kb': invalid commit hash 'not-a-hash'
+
+✗ Integrity verification failed
+  - templates-kb: Expected abc123..., found def456...
+    Run 'graft resolve' to sync
+
+3 validation failures
+```
+
+**Output** (JSON):
+```json
+{
+  "config": {
+    "valid": false,
+    "errors": [
+      {
+        "line": 15,
+        "message": "Invalid git URL 'not-a-url'"
+      }
+    ]
+  },
+  "lock": {
+    "valid": true,
+    "errors": []
+  },
+  "integrity": {
+    "valid": true,
+    "mismatches": []
+  },
+  "overall": "failed"
+}
+```
+
+**Validation Requirements**:
+
+The implementation MUST:
+- Support all three validation modes (config, lock, integrity)
+- Return appropriate exit codes (0=success, 1=validation error, 2=integrity mismatch)
+- Provide clear, actionable error messages
+- Support both human-readable and JSON output formats
+
+The implementation SHOULD:
+- Report multiple errors, not just the first one
+- Include line numbers for config errors where possible
+- Suggest fixes for common errors
+
+**Use Cases**:
+
+1. **Pre-commit hook**:
+```bash
+#!/bin/bash
+# .git/hooks/pre-commit
+graft validate config lock
+if [ $? -ne 0 ]; then
+  echo "Graft validation failed. Fix errors before committing."
+  exit 1
+fi
+```
+
+2. **CI/CD pipeline**:
+```yaml
+# .github/workflows/validate.yml
+- name: Validate Graft config
+  run: graft validate --json
+```
+
+3. **Debug integrity issues**:
+```bash
+# Check if local .graft/ is in sync
+graft validate integrity
+
+# If mismatch, re-resolve
+graft resolve
 ```
 
 ---
@@ -402,57 +437,6 @@ To retry after fixing:
   2. Run: graft upgrade meta-kb --to v2.0.0
 ```
 
-**Implementation**:
-```python
-def upgrade(
-    dep_name: str,
-    to_ref: str,
-    dry_run: bool = False,
-    skip_migration: bool = False,
-    skip_verify: bool = False
-) -> bool:
-    """Upgrade dependency (atomic operation)."""
-
-    if dry_run:
-        return preview_upgrade(dep_name, to_ref)
-
-    # Get change details
-    change = get_change(dep_name, to_ref)
-
-    # Create snapshot for rollback
-    snapshot = create_snapshot()
-
-    try:
-        # Step 1: Update files
-        update_dependency_files(dep_name, to_ref)
-
-        # Step 2: Run migration
-        if change.migration and not skip_migration:
-            execute_command(dep_name, change.migration)
-
-        # Step 3: Run verification
-        if change.verify and not skip_verify:
-            execute_command(dep_name, change.verify)
-
-        # Step 4: Update lock file
-        update_lock_file(
-            dep_name,
-            ref=to_ref,
-            commit=resolve_ref_to_commit(dep_name, to_ref),
-            source=get_dep_source(dep_name)
-        )
-
-        print(f"✓ Upgrade complete: {dep_name}@{to_ref}")
-        return True
-
-    except Exception as e:
-        # Rollback on any failure
-        print(f"Upgrade failed: {e}")
-        print("Rolling back changes...")
-        restore_snapshot(snapshot)
-        print(f"Lock file remains at {get_consumed_ref(dep_name)}")
-        return False
-```
 
 ---
 
@@ -480,26 +464,6 @@ Updated graft.lock
 Note: No migrations were run. Ensure you've completed all required migrations manually.
 ```
 
-**Implementation**:
-```python
-def apply(dep_name: str, to_ref: str):
-    """Apply version without running migrations."""
-
-    # Validate ref exists
-    validate_ref_exists(dep_name, to_ref)
-
-    # Update lock file
-    update_lock_file(
-        dep_name,
-        ref=to_ref,
-        commit=resolve_ref_to_commit(dep_name, to_ref),
-        source=get_dep_source(dep_name)
-    )
-
-    print(f"Applied {dep_name}@{to_ref}")
-    print("Updated graft.lock")
-    print("\nNote: No migrations were run. Ensure you've completed all required migrations manually.")
-```
 
 ---
 
@@ -555,42 +519,6 @@ Validating graft.lock...
 Validation failed with 2 errors, 1 warning
 ```
 
-**Implementation**:
-```python
-def validate(schema_only: bool = False, refs_only: bool = False, lock_only: bool = False):
-    """Validate configuration."""
-    errors = []
-    warnings = []
-
-    if not lock_only:
-        # Validate graft.yaml
-        config = load_graft_yaml()
-        errors.extend(validate_graft_yaml(config))
-
-        if not schema_only:
-            errors.extend(validate_refs_exist(config))
-
-    if not schema_only and not refs_only:
-        # Validate graft.lock
-        lock = read_lock_file()
-        errors.extend(validate_lock_file(lock))
-        warnings.extend(check_lock_integrity(lock))
-
-    # Report results
-    if errors:
-        print(f"Validation failed with {len(errors)} errors")
-        for error in errors:
-            print(f"  ✗ {error}")
-        return False
-    elif warnings:
-        print(f"Validation passed with {len(warnings)} warnings")
-        for warning in warnings:
-            print(f"  ⚠ {warning}")
-        return True
-    else:
-        print("✓ Validation successful")
-        return True
-```
 
 ---
 
@@ -620,41 +548,6 @@ Processing 15 files...
 ✓ Completed
 ```
 
-**Implementation**:
-```python
-def execute_command(dep_name: str, command_name: str, args: list[str] = None):
-    """Execute a command from dependency's graft.yaml."""
-
-    # Load command definition
-    config = load_graft_yaml(dep_name)
-    commands = config.get('commands', {})
-
-    if command_name not in commands:
-        raise ValueError(f"Command '{command_name}' not found in {dep_name}/graft.yaml")
-
-    cmd_def = commands[command_name]
-    cmd = cmd_def['run']
-
-    # Execute
-    working_dir = cmd_def.get('working_dir', '.')
-    env = os.environ.copy()
-    env.update(cmd_def.get('env', {}))
-
-    # Append args if provided
-    if args:
-        cmd = f"{cmd} {' '.join(args)}"
-
-    result = subprocess.run(
-        cmd,
-        shell=True,
-        cwd=working_dir,
-        env=env,
-        capture_output=False  # Stream to stdout/stderr
-    )
-
-    if result.returncode != 0:
-        raise RuntimeError(f"Command failed with exit code {result.returncode}")
-```
 
 ---
 

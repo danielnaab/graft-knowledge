@@ -9,14 +9,30 @@ Graft is a task runner and git-centered package manager that aims to simplify:
 - Git-based dependency management
 - Reproducible development workflows
 
-## Where to start
+## Documentation Structure
 
-- [Use Cases](use-cases.md) - What Graft enables and why
-- [Architecture](architecture.md) - System design and core concepts
-- [Decisions](decisions/) - Architecture Decision Records (ADRs)
-- [Notes](../notes/) - Weekly notes and explorations
-- [Domain config](../knowledge-base.yaml) - KB configuration
+- **[Specifications](specification/)** - Formal specifications for implementers
+  - [Lock File Format](specification/lock-file-format.md) - State tracking format
+  - [graft.yaml Format](specification/graft-yaml-format.md) - Configuration file format
+  - [Core Operations](specification/core-operations.md) - Operation semantics and behavior
+  - [Change Model](specification/change-model.md) - Data model for changes
+  - [Dependency Layout](specification/dependency-layout.md) - How dependencies are organized
 
-## Status
+- **[Decisions](decisions/)** - Architecture Decision Records (ADRs)
+  - Documents key architectural choices with rationale
+  - Captures alternatives considered and trade-offs
 
-This knowledge base is in early development. Core architecture and initial scope are being established.
+- **[Architecture](architecture.md)** - System design and core concepts overview
+
+- **[Use Cases](use-cases.md)** - What Graft enables and why
+
+- **[Work Logs](work-logs/)** - Analysis and design evolution documentation
+
+- **[CHANGELOG](../CHANGELOG.md)** - Track specification changes and additions
+
+## For Implementers
+
+See [CHANGELOG](../CHANGELOG.md) for recent specification changes.
+
+Implement against a specific version by referencing the git commit or tag.
+See CHANGELOG for guidance on pinning implementations to specifications.

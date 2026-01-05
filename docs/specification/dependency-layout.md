@@ -89,9 +89,10 @@ node_modules/
         node_modules/
           c/  # Path length issues on Windows
 ```
-- ❌ Extreme duplication
-- ❌ Path length limits
-- ❌ Inefficient disk usage
+Problems:
+- Extreme duplication
+- Path length limits
+- Inefficient disk usage
 
 **npm v3+: Hoisting and flattening**
 ```
@@ -100,26 +101,30 @@ node_modules/
   b/  # Hoisted from a's deps
   c/  # Hoisted from b's deps
 ```
-- ❌ Non-deterministic structure
-- ❌ Phantom dependencies (using undeclared deps)
-- ❌ Complex resolution algorithm
+Problems:
+- Non-deterministic structure
+- Phantom dependencies (using undeclared deps)
+- Complex resolution algorithm
 
 **Python pip: Global namespace**
-- ❌ Only one version per environment
-- ❌ Dependency conflicts hard to resolve
-- ❌ No isolation between projects
+Problems:
+- Only one version per environment
+- Dependency conflicts hard to resolve
+- No isolation between projects
 
 **Go early GOPATH: Rigid structure**
-- ❌ Requires specific directory layout
-- ❌ Global workspace, no isolation
+Problems:
+- Requires specific directory layout
+- Global workspace, no isolation
 
 ### What They Got Right
 
-✅ **Lockfiles** (npm, yarn, poetry, bundler) - Reproducibility
-✅ **Semantic versioning** - Clear expectations
-✅ **Deduplication where possible** - Efficiency
-✅ **Explicit resolution** (Go modules) - Predictability
-✅ **Content-addressed storage** (pnpm) - Efficiency
+Successful patterns:
+- **Lockfiles** (npm, yarn, poetry, bundler) - Reproducibility
+- **Semantic versioning** - Clear expectations
+- **Deduplication where possible** - Efficiency
+- **Explicit resolution** (Go modules) - Predictability
+- **Content-addressed storage** (pnpm) - Efficiency
 
 ---
 
@@ -138,18 +143,18 @@ node_modules/
           templates-kb/
 ```
 
-**Pros:**
-- ✅ Complete isolation
-- ✅ Simple mental model
-- ✅ No conflicts possible
+**Advantages:**
+- Complete isolation
+- Simple mental model
+- No conflicts possible
 
-**Cons:**
-- ❌ Massive duplication if shared deps
-- ❌ Deep paths (ergonomics suffer)
-- ❌ Inefficient disk usage
-- ❌ Can't reference peer dependencies
+**Disadvantages:**
+- Massive duplication if shared deps
+- Deep paths (ergonomics suffer)
+- Inefficient disk usage
+- Can't reference peer dependencies
 
-**Verdict:** ❌ Too many downsides for knowledge bases
+**Assessment:** Too many downsides for knowledge bases
 
 ---
 
@@ -162,18 +167,18 @@ node_modules/
   templates-kb/     # Hoisted from standards-kb
 ```
 
-**Pros:**
-- ✅ Efficient (no duplication)
-- ✅ Short paths
-- ✅ Works well when deps align
+**Advantages:**
+- Efficient (no duplication)
+- Short paths
+- Works well when deps align
 
-**Cons:**
-- ❌ Non-deterministic structure
-- ❌ Phantom dependencies (can use undeclared deps)
-- ❌ Complex resolution logic
-- ❌ Hard to understand which dep depends on what
+**Disadvantages:**
+- Non-deterministic structure
+- Phantom dependencies (can use undeclared deps)
+- Complex resolution logic
+- Hard to understand which dep depends on what
 
-**Verdict:** ❌ Too much implicit behavior
+**Assessment:** Too much implicit behavior
 
 ---
 
@@ -186,17 +191,17 @@ node_modules/
   github.com/other/templates-kb/
 ```
 
-**Pros:**
-- ✅ No name collisions
-- ✅ Predictable structure
-- ✅ Explicit source
+**Advantages:**
+- No name collisions
+- Predictable structure
+- Explicit source
 
-**Cons:**
-- ❌ Long paths (ergonomics suffer)
-- ❌ URL in path is awkward for linking
-- ❌ Different repos can have same name
+**Disadvantages:**
+- Long paths (ergonomics suffer)
+- URL in path is awkward for linking
+- Different repos can have same name
 
-**Verdict:** ❌ Paths too long for ergonomics
+**Assessment:** Paths too long for ergonomics
 
 ---
 
@@ -212,20 +217,20 @@ project/
     └── templates-kb/    # standards-kb's dep (flattened)
 ```
 
-**Pros:**
-- ✅ Short, predictable paths: `.graft/<name>/`
-- ✅ Efficient (deduplication)
-- ✅ Explicit (lock file shows all consumed deps)
-- ✅ No phantom dependencies
-- ✅ Tooling can validate and visualize
-- ✅ Conflict detection
-- ✅ Single source of truth (no separate tree file)
+**Advantages:**
+- Short, predictable paths: `.graft/<name>/`
+- Efficient (deduplication)
+- Explicit (lock file shows all consumed deps)
+- No phantom dependencies
+- Tooling can validate and visualize
+- Conflict detection
+- Single source of truth (no separate tree file)
 
-**Cons:**
-- ⚠️ Requires dependency resolution algorithm
-- ⚠️ Must detect and fail on version conflicts
+**Disadvantages:**
+- Requires dependency resolution algorithm
+- Must detect and fail on version conflicts
 
-**Verdict:** ✅ Best balance for knowledge bases
+**Assessment:** Best balance for knowledge bases
 
 ---
 
@@ -240,16 +245,16 @@ project/
   standards-kb -> .store/standards-kb@def456/
 ```
 
-**Pros:**
-- ✅ Maximum deduplication
-- ✅ Efficient for monorepos
+**Advantages:**
+- Maximum deduplication
+- Efficient for monorepos
 
-**Cons:**
-- ❌ Symlinks can be fragile
-- ❌ More complex
-- ❌ Overkill for typical use cases
+**Disadvantages:**
+- Symlinks can be fragile
+- More complex
+- Overkill for typical use cases
 
-**Verdict:** ⚠️ Possibly future optimization
+**Assessment:** Possibly future optimization
 
 ---
 

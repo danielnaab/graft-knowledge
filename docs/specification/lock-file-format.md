@@ -477,9 +477,9 @@ Dependencies:
 
 # Validate lock file
 $ graft validate --lock
-✓ Lock file is valid
-✓ All commits verified
-✓ No integrity issues
+Lock file is valid
+All commits verified
+No integrity issues
 ```
 
 ## Git Integration
@@ -489,7 +489,7 @@ The lock file should be committed to git:
 ```bash
 # After upgrade
 $ graft upgrade meta-kb --to v2.0.0
-✓ Upgraded meta-kb to v2.0.0
+Upgraded meta-kb to v2.0.0
 
 $ git status
 modified:   graft.lock
@@ -524,7 +524,7 @@ dependencies:
 **Detection**:
 ```bash
 $ graft validate --lock
-⚠ Warning: meta-kb ref 'main' has moved
+Warning: meta-kb ref 'main' has moved
   Lock file: abc123
   Current:   def456
   Run 'graft upgrade meta-kb' to update
@@ -547,7 +547,7 @@ dependencies:
 **Detection**:
 ```bash
 $ graft validate --lock
-✗ Error: meta-kb ref 'feature-branch' does not exist
+Error: meta-kb ref 'feature-branch' does not exist
   Commit abc123 is still accessible
   Consider updating to a stable ref (tag or main)
 ```
@@ -567,7 +567,7 @@ source: "git@github.com:new-org/repo.git"
 **Detection**:
 ```bash
 $ graft validate
-⚠ Warning: meta-kb source URL differs between graft.yaml and graft.lock
+Warning: meta-kb source URL differs between graft.yaml and graft.lock
   Lock: git@github.com:old-org/repo.git
   Config: git@github.com:new-org/repo.git
 ```

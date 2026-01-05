@@ -1,10 +1,10 @@
 ---
-title: "Decision 0006: No Partial Dependency Resolution"
+title: "Decision 0005: No Partial Dependency Resolution"
 date: 2026-01-05
 status: accepted
 ---
 
-# Decision 0006: No Partial Dependency Resolution
+# Decision 0005: No Partial Dependency Resolution
 
 ## Context
 

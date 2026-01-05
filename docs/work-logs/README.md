@@ -34,15 +34,16 @@ Each work log follows a standard format:
 - Updated 3 core specifications
 
 **Outcomes**:
-- ✅ Approved: Lock file ordering conventions, validation operations specification
-- 🔄 Deferred: Workspace support, mirrors, API versioning (premature - will revisit when needed)
-- ❌ Rejected: Partial dependency resolution (conflicts with atomicity principle)
+- ✅ Approved: Lock file ordering conventions (inline in spec), validation operations, No Partial Resolution decision
+- 🔄 Deferred: Workspace support, mirrors, API versioning strategies (premature - will revisit when needed)
+- ❌ Rejected: Partial dependency resolution (conflicts with atomicity principle - documented in Decision 0005)
 
 **Artifacts**:
-- Decision documents: 0005-0006
+- Decision document: 0005 (No Partial Resolution)
 - Updated specifications: lock-file-format, core-operations
-- Simplified to essential, implementation-ready specifications
-- Removed premature features and implementation details
+- Simplified approach: specifications focus on WHAT, not HOW
+- Removed implementation details (Python code)
+- Formatting conventions inline in specs, not separate ADRs
 
 ## Related
 

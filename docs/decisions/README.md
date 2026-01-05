@@ -37,13 +37,11 @@ Each ADR follows a standard structure:
 
 ### Specification Enhancements (2026-01-05)
 
-- **[Decision 0005](./decision-0005-lock-file-ordering.md)**: Lock File Ordering Conventions
-  - SHOULD order: direct deps first, then transitive, alphabetically within groups
-  - Rationale: Readability, git-friendliness, consistency
-
-- **[Decision 0006](./decision-0006-no-partial-resolution.md)**: No Partial Dependency Resolution
+- **[Decision 0005](./decision-0005-no-partial-resolution.md)**: No Partial Dependency Resolution
   - Explicitly reject partial resolution (violates atomicity & reproducibility)
   - Document rationale and alternatives
+
+**Note**: Lock file ordering conventions are specified inline in the [Lock File Format specification](../specification/lock-file-format.md#ordering-convention) rather than as a separate ADR, as they represent a formatting convention rather than an architectural decision.
 
 ## Status Legend
 

@@ -276,8 +276,11 @@ The architecture is based on several key decisions:
 
 ### Specification Enhancements (2026-01-05)
 
-5. **[Decision 0005: Lock File Ordering Conventions](decisions/decision-0005-lock-file-ordering.md)** - Conventional ordering for readability
-6. **[Decision 0006: No Partial Resolution](decisions/decision-0006-no-partial-resolution.md)** - Maintain atomicity and reproducibility
+5. **[Decision 0005: No Partial Resolution](decisions/decision-0005-no-partial-resolution.md)** - Maintain atomicity and reproducibility
+
+Additional enhancements:
+- Lock file ordering conventions (see [Lock File Format spec](specification/lock-file-format.md#ordering-convention))
+- Validation operations specification (see [Core Operations spec](specification/core-operations.md#validation-operations))
 
 See [all decisions](decisions/) for complete list and rationale.
 

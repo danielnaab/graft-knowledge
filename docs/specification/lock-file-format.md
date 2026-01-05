@@ -88,7 +88,15 @@ Maps dependency names to their current state.
 2. **Transitive dependencies second** - All dependencies with `direct: false`
 3. **Alphabetically within groups** - Within each group, sort by dependency name
 
-**Rationale**: This conventional ordering improves human readability and makes git diffs more meaningful when dependencies change.
+**Rationale**:
+- **Improved readability** - Users can quickly identify which dependencies they declared vs. pulled in transitively
+- **Meaningful git diffs** - Changes group together logically, making dependency evolution clearer
+- **Consistency across tools** - All implementations generate lock files in the same order, reducing churn
+
+**Flexibility**: Parsers MUST accept dependencies in any order to allow:
+- Hand-editing when necessary (emergency fixes, manual conflict resolution)
+- Backward compatibility with lock files generated before this convention
+- Tool flexibility and experimentation
 
 **Example**:
 ```yaml
@@ -103,9 +111,7 @@ dependencies:
   utils-kb: {...}
 ```
 
-**Note**: While this ordering is RECOMMENDED for generated lock files, parsers MUST accept dependencies in any order. This allows hand-editing when necessary without breaking validation.
-
-See: [Decision 0005: Lock File Ordering Conventions](../decisions/decision-0005-lock-file-ordering.md)
+**Implementation guideline**: "Be strict in what you generate, liberal in what you accept" (Robustness Principle)
 
 ### Fields
 

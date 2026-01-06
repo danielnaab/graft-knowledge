@@ -17,6 +17,7 @@ Graft is a task runner and git-centered package manager that aims to simplify:
   - [Core Operations](specification/core-operations.md) - Operation semantics and behavior
   - [Change Model](specification/change-model.md) - Data model for changes
   - [Dependency Layout](specification/dependency-layout.md) - How dependencies are organized
+  - [Dependency Update Notification](specification/dependency-update-notification.md) - Automated update propagation
 
 - **[Decisions](decisions/)** - Architecture Decision Records (ADRs)
   - Documents key architectural choices with rationale

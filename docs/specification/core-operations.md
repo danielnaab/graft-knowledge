@@ -279,6 +279,7 @@ Some dependencies failed to resolve.
 - Dependencies are stored in `.graft/<name>/` (flat layout)
 - Paths in output are absolute for clarity
 - `.graft` is auto-added to `.gitignore` to prevent committing dependencies
+- When using a custom `deps_directory`, symlinks are created in `.graft/<name>` pointing to the actual checkout location, ensuring stable paths for linking
 
 
 ---

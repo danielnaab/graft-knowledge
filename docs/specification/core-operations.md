@@ -218,6 +218,71 @@ Fetching shared-utils...
 
 ---
 
+## Resolution Operations
+
+### graft resolve
+
+**Purpose**: Clone or fetch dependencies specified in graft.yaml.
+
+**Syntax**:
+```bash
+graft resolve
+```
+
+**Behavior**:
+1. Find and parse graft.yaml in current directory
+2. For each dependency:
+   - If `.graft/<name>/` doesn't exist: clone from git URL
+   - If `.graft/<name>/` exists and is a git repo: fetch and checkout ref
+   - If `.graft/<name>/` exists but isn't a git repo: error
+3. Report resolution status for each dependency
+4. Auto-add `.graft` to `.gitignore` if not already present
+
+**Output** (success):
+```
+Found configuration: /path/to/project/graft.yaml
+API Version: graft/v0
+Dependencies: 2
+
+Resolving dependencies...
+
+✓ meta-kb: resolved to /path/to/project/.graft/meta-kb
+✓ standards-kb: resolved to /path/to/project/.graft/standards-kb
+
+Resolved: 2/2
+
+All dependencies resolved successfully!
+```
+
+**Output** (failure):
+```
+Found configuration: /path/to/project/graft.yaml
+API Version: graft/v0
+Dependencies: 2
+
+Resolving dependencies...
+
+✓ meta-kb: resolved to /path/to/project/.graft/meta-kb
+✗ standards-kb: Authentication failed
+  Suggestion: Check SSH key configuration
+
+Resolved: 1/2
+
+Some dependencies failed to resolve.
+```
+
+**Exit codes**:
+- `0` - All dependencies resolved
+- `1` - One or more dependencies failed
+
+**Notes**:
+- Dependencies are stored in `.graft/<name>/` (flat layout)
+- Paths in output are absolute for clarity
+- `.graft` is auto-added to `.gitignore` to prevent committing dependencies
+
+
+---
+
 ## Validation Operations
 
 ### graft validate

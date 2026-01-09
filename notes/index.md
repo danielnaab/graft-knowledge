@@ -11,6 +11,7 @@ These notes are ephemeral - insights should be graduated to [docs/](../docs/) wh
 
 ## Active Brainstorming
 
+- [UI Architecture Brainstorming (2026-01-07)](./2026-01-07-ui-architecture-brainstorming.md) - Deep exploration of browser-based UI concepts: key qualities, architectural patterns, ecosystem repositories, governance
 - [Evolution Brainstorming (2026-01-05)](./2026-01-05-evolution-brainstorming.md) - Comprehensive exploration of Graft's future directions: transactions, web UI, upgrade affordances, agent philosophy, ecosystem
 
 ## Design Sessions

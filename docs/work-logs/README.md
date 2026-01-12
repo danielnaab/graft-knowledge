@@ -25,29 +25,18 @@ Each work log follows a standard format:
 
 **File**: [2026-01-12-dependency-management-exploration.md](./2026-01-12-dependency-management-exploration.md)
 
-**Summary**: Comprehensive exploration of Graft's dependency management architecture, evaluating git submodules and artifact-based composition as alternatives to the current flat checkout approach. Validates existing architectural decisions against alternatives.
+**Summary**: Evaluated git submodules and artifact-based composition as alternatives to the current flat checkout approach. Both alternatives rejected; current architecture validated.
 
 **Scope**:
-- Analysis of current `.graft/` flat layout system
-- Evaluation of git submodules approach (with flattening considerations)
-- Evaluation of artifact-based composition model (bundled dependencies)
-- Alignment analysis against Graft's six core design principles
-- Comparative analysis with modern package managers (npm, cargo, go, pnpm)
-- Transitive dependency handling validation
+- Git submodules (nested structure, deduplication, conflict detection)
+- Artifact-based composition (traceability, collaboration, Decision 0005 alignment)
+- Alignment with six core design principles
 
 **Outcomes**:
-- Validated: Current flat layout with transitive source cloning is correct
-- Confirmed: Decision 0005 (No Partial Resolution) alignment
-- Confirmed: Dependency Layout v2 specification soundness
-- Future: Global cache optimization (Phase 1 priority)
-- Future: Optional artifact generation for deployment use cases
-- Rejected: Git submodules (adds complexity without benefits)
-- Rejected: Artifact-based composition for development (violates core principles)
-
-**Artifacts**:
-- Comprehensive architectural analysis document
-- Validation of transitive dependency cloning decision
-- Future enhancement roadmap (global cache, git optimizations)
+- Validated: Current flat layout with transitive source cloning
+- Rejected: Git submodules (breaks stable paths, no deduplication)
+- Rejected: Artifact-based composition (loses traceability, violates atomicity)
+- Future: Global cache optimization using hard links
 
 ### 2026-01-05: Design Improvements Analysis
 
@@ -62,9 +51,9 @@ Each work log follows a standard format:
 - Updated 3 core specifications
 
 **Outcomes**:
-- ✅ Approved: Lock file ordering conventions (inline in spec), validation operations, No Partial Resolution decision
-- 🔄 Deferred: Workspace support, mirrors, API versioning strategies (premature - will revisit when needed)
-- ❌ Rejected: Partial dependency resolution (conflicts with atomicity principle - documented in Decision 0005)
+- Approved: Lock file ordering conventions (inline in spec), validation operations, No Partial Resolution decision
+- Deferred: Workspace support, mirrors, API versioning strategies (premature - will revisit when needed)
+- Rejected: Partial dependency resolution (conflicts with atomicity principle - documented in Decision 0005)
 
 **Artifacts**:
 - Decision document: 0005 (No Partial Resolution)

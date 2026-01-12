@@ -21,6 +21,34 @@ Each work log follows a standard format:
 
 ## Work Logs
 
+### 2026-01-12: Dependency Management Architecture Exploration
+
+**File**: [2026-01-12-dependency-management-exploration.md](./2026-01-12-dependency-management-exploration.md)
+
+**Summary**: Comprehensive exploration of Graft's dependency management architecture, evaluating git submodules and artifact-based composition as alternatives to the current flat checkout approach. Validates existing architectural decisions against alternatives.
+
+**Scope**:
+- Analysis of current `.graft/` flat layout system
+- Evaluation of git submodules approach (with flattening considerations)
+- Evaluation of artifact-based composition model (bundled dependencies)
+- Alignment analysis against Graft's six core design principles
+- Comparative analysis with modern package managers (npm, cargo, go, pnpm)
+- Transitive dependency handling validation
+
+**Outcomes**:
+- ✅ Validated: Current flat layout with transitive source cloning is correct
+- ✅ Confirmed: Decision 0005 (No Partial Resolution) alignment
+- ✅ Confirmed: Dependency Layout v2 specification soundness
+- 🔄 Future: Global cache optimization (Phase 1 priority)
+- 🔄 Future: Optional artifact generation for deployment use cases
+- ❌ Rejected: Git submodules (adds complexity without benefits)
+- ❌ Rejected: Artifact-based composition for development (violates core principles)
+
+**Artifacts**:
+- Comprehensive architectural analysis document
+- Validation of transitive dependency cloning decision
+- Future enhancement roadmap (global cache, git optimizations)
+
 ### 2026-01-05: Design Improvements Analysis
 
 **File**: [2026-01-05-design-improvements-analysis.md](./2026-01-05-design-improvements-analysis.md)

@@ -2,7 +2,6 @@
 title: "Work Log: Dependency Management Architecture Exploration"
 date: 2026-01-12
 status: completed
-authors: ["Architecture Review"]
 ---
 
 # Work Log: Dependency Management Architecture Exploration
@@ -34,31 +33,31 @@ This approach emerged from prior research and is documented in Decision 0005 (No
 
 ### 1. Flat Layout Benefits
 
-**Ergonomic Paths for Linking**
+Ergonomic paths for linking:
 - Knowledge bases reference dependencies via `../.graft/meta-kb/docs/file.md`
 - Short, predictable paths work from any location
 - Stable regardless of dependency graph structure
 
-**Deduplication**
+Deduplication:
 ```
 Scenario: meta-kb and docs-kb both depend on templates-kb
 
 Current system:
-.graft/templates-kb/  ← Single clone, shared by both
+.graft/templates-kb/  <- Single clone, shared by both
 
 Alternative (nested):
-.graft/meta-kb/.graft/templates-kb/   ← First copy
-.graft/docs-kb/.graft/templates-kb/   ← Duplicate copy
+.graft/meta-kb/.graft/templates-kb/   <- First copy
+.graft/docs-kb/.graft/templates-kb/   <- Duplicate copy
 ```
 
-**Explicit Conflict Detection**
+Explicit conflict detection:
 - Same dependency at different versions causes immediate failure
 - No silent incompatibilities or version confusion
 - Clear error messages guide resolution
 
 ### 2. Lock File as Source of Truth
 
-The lock file documents the **complete dependency graph**:
+The lock file documents the complete dependency graph:
 ```yaml
 dependencies:
   meta-kb:
@@ -108,7 +107,7 @@ project/
 
 ### Advantages
 
-**Native Git Integration**
+Native git integration:
 ```bash
 # Single command gets repo + all dependencies
 git clone --recurse-submodules https://github.com/org/kb.git
@@ -118,20 +117,20 @@ git submodule update --remote
 git submodule foreach 'git status'
 ```
 
-**Version Control Integration**
+Version control integration:
 - Submodule refs part of parent repo history
 - `git diff` shows dependency changes
 - GitHub/GitLab render submodule links
 - Code review tools understand submodules
 
-**Established Tooling**
+Established tooling:
 - IDE support (VS Code, IntelliJ)
 - CI/CD systems have built-in handling
 - Familiar to developers
 
 ### Critical Challenges
 
-**1. Transitive Dependencies Create Nested Structure**
+#### 1. Transitive Dependencies Create Nested Structure
 
 Git submodules only track direct children. For transitive dependencies:
 ```bash
@@ -147,9 +146,9 @@ But this creates nested structure:
 .graft/meta-kb/.graft/standards-kb/
 ```
 
-This **breaks the stable path requirement** - references like `../.graft/standards-kb/` don't work.
+This breaks the stable path requirement - references like `../.graft/standards-kb/` don't work.
 
-**2. Path Instability Without Flattening**
+#### 2. Path Instability Without Flattening
 
 If `meta-kb` contains markdown:
 ```markdown
@@ -158,21 +157,21 @@ See [Terminology](../.graft/standards-kb/terminology.md)
 
 But `standards-kb` is actually at `meta-kb/.graft/standards-kb/`, the link is broken.
 
-**3. Shared Dependency Duplication**
+#### 3. Shared Dependency Duplication
 
 ```
 .graft/
 ├── meta-kb/
 │   └── .graft/
-│       └── templates-kb/   ← First clone
+│       └── templates-kb/   <- First clone
 └── docs-kb/
     └── .graft/
-        └── templates-kb/   ← Duplicate clone
+        └── templates-kb/   <- Duplicate clone
 ```
 
 Submodules don't deduplicate - each parent gets its own copy. This wastes disk space and creates potential version skew.
 
-**4. No Automatic Conflict Detection**
+#### 4. No Automatic Conflict Detection
 
 If `meta-kb` requires `standards-kb@v1.5.0` and `docs-kb` requires `standards-kb@v1.0.0`:
 - Both versions installed in different locations
@@ -182,7 +181,7 @@ If `meta-kb` requires `standards-kb@v1.5.0` and `docs-kb` requires `standards-kb
 
 ### Hybrid: Submodules + Flattening
 
-**Proposed Solution**: Use submodules but add flattening step
+Proposed solution: use submodules but add flattening step.
 ```bash
 # After git submodule update --recursive
 graft flatten
@@ -192,26 +191,26 @@ graft flatten
 ├── meta-kb/              # submodule (direct)
 │   └── .graft/
 │       └── standards-kb/ # nested submodule (actual location)
-└── standards-kb/         # symlink → meta-kb/.graft/standards-kb/
+└── standards-kb/         # symlink -> meta-kb/.graft/standards-kb/
 ```
 
-**Windows Symlink Concerns**
+Windows symlink concerns:
 
 This approach requires symlinks, which are problematic on Windows:
 - Require admin privileges (pre-Windows 10 v1703)
 - Developer Mode required for unprivileged symlinks
 - Not all Windows users have Developer Mode enabled
 
-**Workarounds**:
+Workarounds:
 - Junction points (Windows-specific, directories only)
 - Hard links (files only, same volume)
 - Copy instead of symlink (wastes space)
 - Require Developer Mode (limits adoption)
 
-**How other tools handle this**:
-- **pnpm**: Hard links from global store, falls back to copy
-- **Yarn**: Plug'n'Play avoids `node_modules` entirely
-- **Bazel**: Uses junction points on Windows, symlinks on Unix
+How other tools handle this:
+- pnpm: Hard links from global store, falls back to copy
+- Yarn: Plug'n'Play avoids `node_modules` entirely
+- Bazel: Uses junction points on Windows, symlinks on Unix
 
 ### Assessment
 
@@ -221,7 +220,7 @@ Git submodules would require:
 3. Windows compatibility layer
 4. Maintaining redundant lock file for metadata
 
-**Complexity outweighs benefits.** The lock file would still be needed for graph metadata, making submodules redundant.
+The added complexity does not justify the benefits. The lock file would still be needed for graph metadata, making submodules redundant.
 
 ## Alternative 2: Artifact-Based Composition
 
@@ -248,7 +247,7 @@ your-kb/
 
 ### How It Would Work
 
-**Artifact Generation**
+Artifact generation:
 ```bash
 $ cd meta-kb
 $ graft bundle --output meta-kb-v2.0.0.bundle
@@ -256,12 +255,12 @@ $ graft bundle --output meta-kb-v2.0.0.bundle
 # Process:
 # 1. Clone all transitive dependencies
 # 2. Copy into .bundled/ directory
-# 3. Rewrite references: ../.graft/standards-kb/ → .bundled/standards-kb/
+# 3. Rewrite references: ../.graft/standards-kb/ -> .bundled/standards-kb/
 # 4. Create manifest documenting bundled versions
 # 5. Commit and tag as release artifact
 ```
 
-**Artifact Consumption**
+Artifact consumption:
 ```yaml
 # graft.yaml
 dependencies:
@@ -279,28 +278,28 @@ $ graft resolve
 
 ### Advantages
 
-**1. Smaller Dependency Surface**
-- Only direct dependencies cloned
-- Clearer security boundary (trust only what you explicitly list)
-- Simpler trust model for consumers
+1. Smaller dependency surface
+   - Only direct dependencies cloned
+   - Clearer security boundary (trust only what you explicitly list)
+   - Simpler trust model for consumers
 
-**2. Simpler Installation**
-- Fewer git operations
-- Faster `graft resolve`
-- Less disk space per project
+2. Simpler installation
+   - Fewer git operations
+   - Faster `graft resolve`
+   - Less disk space per project
 
-**3. Immutability Guarantees**
-- Artifact bundled at specific versions
-- Even if transitive deps change, artifact stays stable
-- No phantom dependency updates
+3. Immutability guarantees
+   - Artifact bundled at specific versions
+   - Even if transitive deps change, artifact stays stable
+   - No phantom dependency updates
 
-**4. Clearer Dependency Declaration**
-- If you use it, you list it
-- No implicit access to transitives
+4. Clearer dependency declaration
+   - If you use it, you list it
+   - No implicit access to transitives
 
 ### Critical Disadvantages
 
-**1. Lost Source Access and Traceability**
+#### 1. Lost Source Access and Traceability
 
 ```
 Question: "Where did this terminology definition come from?"
@@ -316,7 +315,7 @@ Artifact model:
 - Lost provenance and context
 ```
 
-**2. Breaks Cross-Dependency Collaboration**
+#### 2. Breaks Cross-Dependency Collaboration
 
 ```
 Scenario: You want to contribute a fix to standards-kb
@@ -333,7 +332,7 @@ Artifact model:
 - Friction in contribution workflow
 ```
 
-**3. Duplication When Multiple Dependencies Share Transitives**
+#### 3. Duplication When Multiple Dependencies Share Transitives
 
 ```
 Scenario: meta-kb and docs-kb both depend on templates-kb
@@ -341,16 +340,16 @@ Scenario: meta-kb and docs-kb both depend on templates-kb
 Artifact model:
 .graft/
 ├── meta-kb/
-│   └── .bundled/templates-kb/  ← First copy
+│   └── .bundled/templates-kb/  <- First copy
 └── docs-kb/
-    └── .bundled/templates-kb/  ← Duplicate copy
+    └── .bundled/templates-kb/  <- Duplicate copy
 
-Problem: Duplication! Same content bundled multiple times
+Problem: Same content bundled multiple times
 ```
 
 This violates the deduplication principle that the flat layout achieves.
 
-**4. Broken Knowledge Graph Integrity**
+#### 4. Broken Knowledge Graph Integrity
 
 From Decision 0005, knowledge bases cross-reference each other's dependencies:
 ```markdown
@@ -361,14 +360,14 @@ See [Architecture Pattern](../.graft/meta-kb/patterns.md)
 Uses template from [Templates](../.graft/templates-kb/header.md)
 ```
 
-**Current model**: Both references work - complete graph available
+Current model: Both references work because the complete graph is available.
 
-**Artifact model**: Second reference rewritten to `.bundled/templates-kb/`:
+Artifact model: Second reference rewritten to `.bundled/templates-kb/`:
 - Can't navigate directly to templates-kb source
 - Can't see templates-kb's full context
 - Lost semantic connection to source of truth
 
-**5. Limited AI Agent Analysis**
+#### 5. Limited AI Agent Analysis
 
 From Graft's AI collaboration use case:
 ```
@@ -385,23 +384,23 @@ Artifact model:
 - Limited analysis depth
 ```
 
-### Fundamental Question: What IS a Knowledge Base?
+### Fundamental Question: What Is a Knowledge Base?
 
 This choice depends on the nature of knowledge bases:
 
-**If Knowledge Bases Are Like Libraries (npm packages)**
+If knowledge bases are like libraries (npm packages):
 - Consumed, not modified
 - Published artifacts make sense
 - Clear versioning, immutability important
 - Consumers trust published versions
-- **→ Artifact model appropriate**
+- Artifact model would be appropriate
 
-**If Knowledge Bases Are Like Wikis (living documents)**
+If knowledge bases are like wikis (living documents):
 - Collaborative, evolving
 - Source access critical
 - Traceability and provenance matter
 - Contributors need context
-- **→ Source model appropriate**
+- Source model would be appropriate
 
 ### Graft's Stated Vision
 
@@ -411,19 +410,19 @@ From architecture documentation, Graft is designed for:
 - "Evolvability through visible discovery" (needs source access)
 - "Semantic dependency management" (tracks evolution, not snapshots)
 
-**This aligns with the WIKI model** - living, composable knowledge that evolves over time.
+This aligns with the collaborative document model - living, composable knowledge that evolves over time.
 
 ### Artifact Model Conflicts With Explicit Architectural Decisions
 
-**Decision 0005: No Partial Resolution** explicitly states:
+Decision 0005: No Partial Resolution explicitly states:
 > "Graft WILL NOT support partial dependency resolution."
 >
 > "All dependencies declared in `graft.yaml` and their complete transitive dependency graphs MUST be resolved together."
 
-**Rationale cited**:
-1. **Atomicity Violation** - Partial resolution creates partial states
-2. **Reproducibility Violation** - Different environments resolve differently
-3. **Explicitness Violation** - Unclear what "partial" means
+Rationale cited:
+1. Atomicity violation - Partial resolution creates partial states
+2. Reproducibility violation - Different environments resolve differently
+3. Explicitness violation - Unclear what "partial" means
 
 The artifact model would create exactly this partial resolution:
 - Only direct dependencies present as source
@@ -433,29 +432,28 @@ The artifact model would create exactly this partial resolution:
 
 ### Assessment
 
-The artifact model fundamentally misaligns with Graft's design philosophy:
-- **Violates atomicity**: Creates incomplete source graph
-- **Breaks composability**: Transitive deduplication impossible
-- **Reduces traceability**: Lost git history and provenance
-- **Hinders collaboration**: Contributors can't access full context
-- **Limits AI agents**: Incomplete source graph for analysis
+The artifact model misaligns with Graft's design philosophy:
+- Violates atomicity: Creates incomplete source graph
+- Breaks composability: Transitive deduplication impossible
+- Reduces traceability: Lost git history and provenance
+- Hinders collaboration: Contributors can't access full context
+- Limits AI agents: Incomplete source graph for analysis
 
-**However**, there IS a valid use case for artifacts in the future:
+However, there is a valid use case for artifacts in the future: publishing final documentation.
 
-**Publishing Final Documentation**
 ```bash
 # Development mode: source dependencies
 graft resolve --mode=source
-# → Full source access for development
+# Full source access for development
 
 # Production mode: bundled artifact
 graft build --output=docs-bundle.tar.gz
-# → Self-contained artifact for deployment
+# Self-contained artifact for deployment
 ```
 
 This hybrid approach:
-- **Development**: Full source access, complete graph, contribution-friendly
-- **Production**: Single artifact for deployment, immutable, self-contained
+- Development: Full source access, complete graph, contribution-friendly
+- Production: Single artifact for deployment, immutable, self-contained
 
 Similar to how Sphinx/Docusaurus work:
 - Development: Live reloading from source files
@@ -465,19 +463,19 @@ Similar to how Sphinx/Docusaurus work:
 
 ### npm/yarn/pnpm (Node.js)
 
-**npm v2**: Nested `node_modules` (like nested submodules)
-- **Problem**: Duplication, deep paths, phantom dependencies
+npm v2 used nested `node_modules` (like nested submodules):
+- Problem: Duplication, deep paths, phantom dependencies
 
-**npm v3+/yarn v1**: Hoisted/flattened `node_modules`
-- **Solution**: Flat structure with deduplication
-- **Similar to current Graft `.graft/` approach**
+npm v3+/yarn v1 use hoisted/flattened `node_modules`:
+- Solution: Flat structure with deduplication
+- Similar to current Graft `.graft/` approach
 
-**pnpm**: Content-addressable store + hard links
+pnpm uses content-addressable store + hard links:
 - Global store at `~/.pnpm-store/`
 - Project has `node_modules/.pnpm/` with hard links
 - Solves deduplication without symlink issues
 
-**Yarn v2+ (Berry)**: Plug'n'Play
+Yarn v2+ (Berry) uses Plug'n'Play:
 - No `node_modules` directory
 - Resolution map in `.pnp.cjs`
 - Runtime resolves from zip files or cache
@@ -498,47 +496,48 @@ Similar to how Sphinx/Docusaurus work:
 
 ### Key Patterns Across Ecosystems
 
-1. **Flat layouts win** - Nested dependencies cause problems
-2. **Global cache + local references** - Avoid duplication across projects
-3. **Lock files are canonical** - Record complete resolved state
-4. **Symlinks optional** - Modern tools have fallbacks (hard links, copies)
+1. Flat layouts win - Nested dependencies cause problems
+2. Global cache + local references - Avoid duplication across projects
+3. Lock files are canonical - Record complete resolved state
+4. Symlinks optional - Modern tools have fallbacks (hard links, copies)
 
 ## Conclusions
 
-### Current Architecture Is Correct
+### Current Architecture Assessment
 
-After deep analysis, **transitive source cloning in flat layout is the right design** for Graft because:
+Transitive source cloning in flat layout is the appropriate design for Graft because:
 
-1. **Knowledge bases are living, interconnected documents** - not immutable packages
-2. **Cross-referencing across dependency boundaries is fundamental** - requires stable paths
-3. **Traceability and source access are critical** - for collaboration and understanding
-4. **The specification's design is coherent** - explicitly addresses these concerns
-5. **Artifact model would break core principles** - atomicity, composability, deduplication
+1. Knowledge bases are living, interconnected documents - not immutable packages
+2. Cross-referencing across dependency boundaries is fundamental - requires stable paths
+3. Traceability and source access are critical - for collaboration and understanding
+4. The specification's design is coherent - explicitly addresses these concerns
+5. Artifact model would break core principles - atomicity, composability, deduplication
 
 ### Alignment With Core Principles
 
 | Principle | Current Approach | Git Submodules | Artifact Model |
 |-----------|-----------------|----------------|----------------|
-| **Git-Native** | ✓ Uses git refs | ✓ Uses submodules | ⚠️ Bundles lose git context |
-| **Explicit Over Implicit** | ✓ Complete lock file | ⚠️ Need lock file anyway | ❌ Partial source availability |
-| **Atomic Operations** | ✓ All-or-nothing | ⚠️ With flattening | ❌ Creates partial states |
-| **Reproducibility** | ✓ Complete graph | ⚠️ With custom tooling | ❌ Different source availability |
-| **Composability** | ✓ Flat, deduplicated | ❌ Nested duplication | ❌ Bundled duplication |
-| **Minimal Primitives** | ✓ Simple model | ❌ Adds submodule complexity | ❌ Adds artifact concept |
+| Git-Native | Yes - Uses git refs | Yes - Uses submodules | Partial - Bundles lose git context |
+| Explicit Over Implicit | Yes - Complete lock file | Partial - Need lock file anyway | No - Partial source availability |
+| Atomic Operations | Yes - All-or-nothing | Partial - With flattening | No - Creates partial states |
+| Reproducibility | Yes - Complete graph | Partial - With custom tooling | No - Different source availability |
+| Composability | Yes - Flat, deduplicated | No - Nested duplication | No - Bundled duplication |
+| Minimal Primitives | Yes - Simple model | No - Adds submodule complexity | No - Adds artifact concept |
 
 ### Validation Against Specification
 
 The exploration confirms that existing architectural decisions are well-founded:
 
-- **Decision 0005 (No Partial Resolution)** - Validated by artifact model analysis
-- **Dependency Layout v2 (Flat Layout)** - Validated by submodule comparison
-- **Lock File v2 (Extended Fields)** - Validated by source traceability needs
+- Decision 0005 (No Partial Resolution) - Validated by artifact model analysis
+- Dependency Layout v2 (Flat Layout) - Validated by submodule comparison
+- Lock File v2 (Extended Fields) - Validated by source traceability needs
 
 ## Future Enhancements
 
 While maintaining the current architecture, these optimizations are valuable:
 
-### Phase 1: Global Cache (High Priority)
+### Phase 1: Global Cache
+
 ```
 ~/.graft/cache/<commit-hash>/
 ```
@@ -550,66 +549,64 @@ Benefits:
 
 Similar to pnpm and Cargo patterns.
 
-### Phase 2: Git Optimizations (Medium Priority)
+### Phase 2: Git Optimizations
+
 - Shallow clones for dependencies (save bandwidth)
 - Sparse checkout for large dependencies (only needed paths)
 - Parallel clone operations (faster resolution)
 
-### Phase 3: Optional Artifact Generation (Future)
+### Phase 3: Optional Artifact Generation
+
 ```bash
 graft bundle --output docs-bundle.tar.gz
 ```
 
-For deployment, distribution, and archival use cases. **Not for development workflow.**
+For deployment, distribution, and archival use cases. Not for development workflow.
 
 ## Recommendations
 
-1. **Continue with current architecture** - It is sound and well-aligned with goals
-2. **Prioritize global cache** - Provides optimization without complexity
-3. **Document the rationale** - This work log captures the analysis
-4. **Consider hybrid artifact model** - For future deployment use cases only
+1. Continue with current architecture - It is sound and well-aligned with goals
+2. Prioritize global cache - Provides optimization without complexity
+3. Document the rationale - This work log captures the analysis
+4. Consider hybrid artifact model - For future deployment use cases only
 
 ## Open Questions (For Future)
 
 ### Q1: Global Cache Location
+
 Should cache be:
 - `~/.graft/cache/` (user-level)
 - `.graft-cache/` in project (project-level)
 - Configurable via environment variable
 
-**Recommendation**: User-level by default, configurable
+Recommendation: User-level by default, configurable.
 
 ### Q2: Cache Eviction Strategy
+
 When should cached dependencies be removed:
 - Manual cleanup only
 - LRU (least recently used)
 - TTL (time to live)
 - Configurable max size
 
-**Recommendation**: Start with manual, add LRU later if needed
+Recommendation: Start with manual, add LRU later if needed.
 
 ### Q3: Hard Link vs Copy Fallback
+
 When hard links fail (cross-volume, unsupported filesystem):
 - Error and require user action
 - Silent fallback to copy
 - Warning + fallback to copy
 
-**Recommendation**: Warning + fallback (like pnpm)
-
-## Next Steps
-
-1. ✅ Complete this work log
-2. Commit and push to branch
-3. Create pull request
-4. Archive for future reference
+Recommendation: Warning + fallback (like pnpm).
 
 ## Changelog
 
-- **2026-01-12 Initial exploration**: Comprehensive analysis of:
+- 2026-01-12: Initial exploration covering:
   - Current `.graft/` checkout system
   - Git submodules alternative (with flattening considerations)
   - Artifact-based composition model
   - Alignment with Graft's design principles
   - Comparative analysis with modern package managers
-  - **Conclusion**: Current architecture is correct; validated existing decisions
-  - **Recommendation**: Proceed with global cache optimization, maintain current design
+  - Conclusion: Current architecture validated
+  - Recommendation: Proceed with global cache optimization, maintain current design

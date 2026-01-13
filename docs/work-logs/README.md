@@ -21,6 +21,23 @@ Each work log follows a standard format:
 
 ## Work Logs
 
+### 2026-01-12: Dependency Management Architecture Exploration
+
+**File**: [2026-01-12-dependency-management-exploration.md](./2026-01-12-dependency-management-exploration.md)
+
+**Summary**: Evaluated git submodules and artifact-based composition as alternatives to the current flat checkout approach. Both alternatives rejected; current architecture validated.
+
+**Scope**:
+- Git submodules (nested structure, deduplication, conflict detection)
+- Artifact-based composition (traceability, collaboration, Decision 0005 alignment)
+- Alignment with six core design principles
+
+**Outcomes**:
+- Validated: Current flat layout with transitive source cloning
+- Rejected: Git submodules (breaks stable paths, no deduplication)
+- Rejected: Artifact-based composition (loses traceability, violates atomicity)
+- Future: Global cache optimization using hard links
+
 ### 2026-01-05: Design Improvements Analysis
 
 **File**: [2026-01-05-design-improvements-analysis.md](./2026-01-05-design-improvements-analysis.md)
@@ -34,9 +51,9 @@ Each work log follows a standard format:
 - Updated 3 core specifications
 
 **Outcomes**:
-- ✅ Approved: Lock file ordering conventions (inline in spec), validation operations, No Partial Resolution decision
-- 🔄 Deferred: Workspace support, mirrors, API versioning strategies (premature - will revisit when needed)
-- ❌ Rejected: Partial dependency resolution (conflicts with atomicity principle - documented in Decision 0005)
+- Approved: Lock file ordering conventions (inline in spec), validation operations, No Partial Resolution decision
+- Deferred: Workspace support, mirrors, API versioning strategies (premature - will revisit when needed)
+- Rejected: Partial dependency resolution (conflicts with atomicity principle - documented in Decision 0005)
 
 **Artifacts**:
 - Decision document: 0005 (No Partial Resolution)

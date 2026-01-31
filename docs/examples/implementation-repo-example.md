@@ -16,7 +16,7 @@ graft/  (Python implementation repo)
 ├── src/graft/
 ├── tests/
 ├── docs/
-└── work-logs/                   # Implementation work logs
+└── notes/                       # Implementation notes
 ```
 
 ## graft-spec.yaml
@@ -301,9 +301,9 @@ None
       Asked: 2026-01-06
 ```
 
-## Example Work Log
+## Example Note
 
-### work-logs/2026-01-06-validation-implementation.md
+### notes/2026-01-06-validation-implementation.md
 
 ```markdown
 # Work Log: Validation Implementation
@@ -401,7 +401,7 @@ All tests passing:
 ## References
 
 - Spec: graft-knowledge@881fdd5 core-operations.md#validation-operations
-- Work log: graft-knowledge/docs/work-logs/2026-01-05-design-improvements-analysis.md
+- Note: graft-knowledge/notes/2026-01-05-design-improvements-analysis.md
 ```
 
 ## Summary

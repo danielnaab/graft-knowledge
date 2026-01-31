@@ -838,7 +838,7 @@ The hybrid terminology (horticultural core + software operations) is a strength.
 
 - [Graft Architecture](../docs/architecture.md)
 - [Upgrade Mechanisms Brainstorming](./2026-01-01-upgrade-mechanisms.md)
-- [Design Improvements Analysis](../docs/work-logs/2026-01-05-design-improvements-analysis.md)
+- [Design Improvements Analysis](./2026-01-05-design-improvements-analysis.md)
 - [Decision 0004: Atomic Upgrades](../docs/decisions/decision-0004-atomic-upgrades.md)
 - [Core Operations Specification](../docs/specification/core-operations.md)
 - [Meta Knowledge Base Conventions](../../meta-knowledge-base/docs/meta.md)

@@ -5,14 +5,20 @@ status: working
 
 # Notes
 
-Working notes, brainstorming sessions, and time-bounded explorations for the Graft project.
+Working notes, brainstorming sessions, design analysis, and explorations for the Graft project.
 
-These notes are ephemeral - insights should be graduated to [docs/](../docs/) when they stabilize.
+Insights should graduate to [docs/](../docs/) when they stabilize.
 
-## Active Brainstorming
+## Design Analysis
 
-- [UI Architecture Brainstorming (2026-01-07)](./2026-01-07-ui-architecture-brainstorming.md) - Deep exploration of browser-based UI concepts: key qualities, architectural patterns, ecosystem repositories, governance
-- [Evolution Brainstorming (2026-01-05)](./2026-01-05-evolution-brainstorming.md) - Comprehensive exploration of Graft's future directions: transactions, web UI, upgrade affordances, agent philosophy, ecosystem
+- [One-Level Dependency Exploration (2026-01-31)](./2026-01-31-one-level-dependency-exploration.md) - Analysis of simplified dependency model with only one level of dependencies
+- [Dependency Management Exploration (2026-01-12)](./2026-01-12-dependency-management-exploration.md) - Evaluated git submodules and artifact-based composition; validated current flat layout
+- [Design Improvements Analysis (2026-01-05)](./2026-01-05-design-improvements-analysis.md) - Comprehensive analysis of design recommendations; created ADRs and updated specifications
+
+## Brainstorming
+
+- [UI Architecture Brainstorming (2026-01-07)](./2026-01-07-ui-architecture-brainstorming.md) - Browser-based UI concepts: key qualities, architectural patterns, ecosystem repositories
+- [Evolution Brainstorming (2026-01-05)](./2026-01-05-evolution-brainstorming.md) - Future directions: transactions, web UI, upgrade affordances, agent philosophy
 
 ## Design Sessions
 
@@ -31,5 +37,4 @@ These notes are ephemeral - insights should be graduated to [docs/](../docs/) wh
 ## Related
 
 - [Docs Index](../docs/README.md) - Curated, stable documentation
-- [Work Logs](../docs/work-logs/) - Analysis and design evolution records
 - [Decisions](../docs/decisions/) - Architecture Decision Records

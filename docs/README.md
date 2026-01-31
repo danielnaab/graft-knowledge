@@ -27,9 +27,9 @@ Graft is a task runner and git-centered package manager that aims to simplify:
 
 - **[Use Cases](use-cases.md)** - What Graft enables and why
 
-- **[Work Logs](work-logs/)** - Analysis and design evolution documentation
-
 - **[CHANGELOG](../CHANGELOG.md)** - Track specification changes and additions
+
+- **[Notes](../notes/)** - Working notes, brainstorming, and design analysis
 
 ## For Implementers
 

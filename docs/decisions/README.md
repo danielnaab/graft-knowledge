@@ -66,7 +66,7 @@ When making significant architectural decisions:
 
 ## Related
 
-- [Work Logs](../work-logs/) - Detailed analysis and process documentation
+- [Notes](../../notes/) - Working notes, brainstorming, and design analysis
 - [Specifications](../specification/) - Formal specifications implementing these decisions
 - [Architecture Overview](../architecture.md) - High-level architecture
 

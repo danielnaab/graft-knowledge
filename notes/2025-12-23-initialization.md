@@ -24,7 +24,7 @@ The knowledge base now has:
   - `docs/decisions/decision-0001-initial-scope.md` - Scope definition
 - Entrypoints:
   - `docs/README.md` - Human entrypoint
-  - `docs/agents.md` - Agent entrypoint with curator guidance
+  - `AGENTS.md` - Agent entrypoint with curator guidance
 
 ## Key decisions made
 

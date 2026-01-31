@@ -5,7 +5,7 @@ This repository organizes thinking and design decisions for the Graft tool proje
 ## Entrypoints
 
 - **Human**: [docs/README.md](docs/README.md)
-- **Agent**: [docs/agents.md](docs/agents.md)
+- **Agent**: [AGENTS.md](AGENTS.md)
 
 ## What is Graft?
 

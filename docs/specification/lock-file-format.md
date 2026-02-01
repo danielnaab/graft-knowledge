@@ -1,22 +1,24 @@
 ---
 title: "Lock File Format Specification"
-date: 2026-01-05
+date: 2026-01-31
 status: draft
-version: 2.0
+version: 3.0
+supersedes: 2.0
 ---
 
 # Lock File Format Specification
 
 ## Overview
 
-The `graft.lock` file tracks the exact state of **all** consumed dependencies (both direct and transitive). It records:
-- Which dependencies are being used (direct and transitive)
+The `graft.lock` file tracks the exact state of consumed **direct dependencies**. It records:
+- Which dependencies are being used
 - What version (git ref) has been consumed
 - Resolved commit hash for integrity
-- Dependency relationships (requires/required_by)
 - When each dependency was last updated
 
 This file should be committed to version control to ensure reproducible dependency states across environments.
+
+**Key Change from v2:** Lock file no longer tracks transitive dependencies. Only direct dependencies declared in `graft.yaml` are recorded. This aligns with the flat-only dependency model introduced in Decision 0007.
 
 ## File Location
 
@@ -32,13 +34,11 @@ project-root/
 
 The lock file serves several purposes:
 
-1. **Complete state tracking**: Records ALL dependencies (direct + transitive) and their versions
+1. **State tracking**: Records direct dependencies and their consumed versions
 2. **Reproducibility**: Enables identical dependency states across machines
 3. **Integrity**: Stores commit hashes to detect tampering
-4. **Dependency graph**: Tracks relationships via requires/required_by fields
-5. **History**: Can be tracked in git to see dependency evolution
-6. **Atomicity**: Updated only when upgrade fully succeeds
-7. **Garbage collection**: Identifies which deps are no longer needed
+4. **History**: Can be tracked in git to see dependency evolution
+5. **Atomicity**: Updated only when upgrade fully succeeds
 
 ## Schema
 
@@ -47,16 +47,13 @@ The lock file serves several purposes:
 ```yaml
 apiVersion: graft/v0
 
-# All resolved dependencies (direct + transitive)
+# Direct dependencies only
 dependencies:
   <dep-name>:
     source: string           # Git URL or path
     ref: string              # Consumed git ref (tag, branch, commit)
     commit: string           # Resolved commit hash (SHA-1)
     consumed_at: datetime    # ISO 8601 timestamp
-    direct: boolean          # Is this a direct dependency?
-    requires: [string]       # List of dependencies this dep needs
-    required_by: [string]    # List of dependencies that need this dep
 ```
 
 ### API Version
@@ -82,33 +79,24 @@ Maps dependency names to their current state.
 
 ### Ordering Convention
 
-**Specification**: Dependencies SHOULD be ordered as follows:
-
-1. **Direct dependencies first** - All dependencies with `direct: true`
-2. **Transitive dependencies second** - All dependencies with `direct: false`
-3. **Alphabetically within groups** - Within each group, sort by dependency name
+**Specification**: Dependencies SHOULD be ordered alphabetically by name.
 
 **Rationale**:
-- **Improved readability** - Users can quickly identify which dependencies they declared vs. pulled in transitively
-- **Meaningful git diffs** - Changes group together logically, making dependency evolution clearer
-- **Consistency across tools** - All implementations generate lock files in the same order, reducing churn
+- **Consistent output** - All implementations generate lock files in the same order
+- **Meaningful git diffs** - Changes to dependencies are clear in diffs
+- **Easy to scan** - Users can quickly find a specific dependency
 
 **Flexibility**: Parsers MUST accept dependencies in any order to allow:
-- Hand-editing when necessary (emergency fixes, manual conflict resolution)
-- Backward compatibility with lock files generated before this convention
-- Tool flexibility and experimentation
+- Hand-editing when necessary
+- Backward compatibility
+- Tool flexibility
 
 **Example**:
 ```yaml
 dependencies:
-  # Direct dependencies (alphabetical)
-  docs-kb: {...}
+  coding-standards: {...}
   meta-kb: {...}
-
-  # Transitive dependencies (alphabetical)
-  standards-kb: {...}
   templates-kb: {...}
-  utils-kb: {...}
 ```
 
 **Implementation guideline**: "Be strict in what you generate, liberal in what you accept" (Robustness Principle)
@@ -172,146 +160,51 @@ commit: "abc123def456789012345678901234567890abcd"
 
 **Example**:
 ```yaml
-consumed_at: "2026-01-01T10:30:00Z"
-consumed_at: "2026-01-01T10:30:00.123456+00:00"
-```
-
-#### direct (required)
-**Type**: `boolean`
-
-**Description**: Whether this is a direct dependency (declared in graft.yaml) or transitive (required by another dependency).
-
-**Values**:
-- `true`: Direct dependency (declared in consumer's graft.yaml)
-- `false`: Transitive dependency (pulled in by another dep)
-
-**Purpose**:
-- Distinguish between deps you declared vs deps that are pulled in
-- Enable filtering (e.g., "show only my direct deps")
-- Guide upgrade decisions (direct deps vs transitive)
-
-**Example**:
-```yaml
-direct: true   # You declared this
-direct: false  # Pulled in transitively
-```
-
-#### requires (required)
-**Type**: `list[string]`
-
-**Description**: List of dependency names that this dependency requires (its own dependencies from its graft.yaml).
-
-**Values**: List of dependency names, empty list if leaf dependency
-
-**Purpose**:
-- Reconstruct dependency tree
-- Understand dependency chains
-- Detect circular dependencies
-- Plan upgrade impact
-
-**Example**:
-```yaml
-requires: ["standards-kb", "templates-kb"]  # This dep needs these
-requires: []                                  # Leaf dependency
-```
-
-#### required_by (required)
-**Type**: `list[string]`
-
-**Description**: List of dependency names that require this dependency.
-
-**Values**: List of dependency names, empty list for direct dependencies
-
-**Purpose**:
-- Identify shared dependencies (multiple entries)
-- Garbage collection (no entries means unused)
-- Impact analysis ("what depends on this?")
-- Upgrade planning
-
-**Example**:
-```yaml
-required_by: []                   # Direct dep (nothing requires it from us)
-required_by: ["meta-kb"]          # Only meta-kb needs this
-required_by: ["meta-kb", "docs-kb"]  # Shared by both!
+consumed_at: "2026-01-31T10:30:00Z"
+consumed_at: "2026-01-31T10:30:00.123456+00:00"
 ```
 
 ## Complete Example
 
-### Simple Project (one direct dep with transitive deps)
+### Simple Project (single direct dependency)
 
 ```yaml
 apiVersion: graft/v0
 
 dependencies:
-  # Direct dependency
   meta-knowledge-base:
     source: "git@github.com:org/meta-kb.git"
     ref: "v2.0.0"
     commit: "abc123def456789012345678901234567890abcd"
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: true
-    requires: ["standards-kb"]
-    required_by: []
-
-  # Transitive dependency (from meta-kb)
-  standards-kb:
-    source: "https://github.com/org/standards.git"
-    ref: "v1.5.0"
-    commit: "def456abc123789012345678901234567890abcd"
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: false
-    requires: ["templates-kb"]
-    required_by: ["meta-knowledge-base"]
-
-  # Transitive dependency (from standards-kb)
-  templates-kb:
-    source: "https://github.com/org/templates.git"
-    ref: "v1.0.0"
-    commit: "789abc456def012345678901234567890abcdef12"
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: false
-    requires: []
-    required_by: ["standards-kb"]
+    consumed_at: "2026-01-31T10:30:00Z"
 ```
 
-### Complex Project (shared dependencies)
+### Project with Multiple Dependencies
 
 ```yaml
 apiVersion: graft/v0
 
 dependencies:
-  # Direct dependency #1
+  coding-standards:
+    source: "https://github.com/org/standards.git"
+    ref: "v1.5.0"
+    commit: "def456abc123789012345678901234567890abcd"
+    consumed_at: "2026-01-31T09:15:00Z"
+
   meta-kb:
     source: "git@github.com:org/meta-kb.git"
     ref: "v2.0.0"
-    commit: "abc123..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: true
-    requires: ["templates-kb"]
-    required_by: []
+    commit: "abc123def456789012345678901234567890abcd"
+    consumed_at: "2026-01-31T10:30:00Z"
 
-  # Direct dependency #2
-  docs-kb:
-    source: "git@github.com:org/docs-kb.git"
-    ref: "v1.0.0"
-    commit: "bcd234..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: true
-    requires: ["templates-kb"]
-    required_by: []
-
-  # Shared transitive dependency
   templates-kb:
     source: "https://github.com/org/templates.git"
     ref: "v1.0.0"
-    commit: "def456..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: false
-    requires: []
-    required_by: ["meta-kb", "docs-kb"]  # Shared!
+    commit: "789abc456def012345678901234567890abcdef12"
+    consumed_at: "2026-01-30T14:20:00Z"
 ```
 
-**Note:** `templates-kb` appears in multiple `required_by` lists, indicating it's shared.
+**Note:** All dependencies are direct (declared in `graft.yaml`). Alphabetically ordered for consistency.
 
 ## Lifecycle
 
@@ -434,6 +327,12 @@ def validate_lock_file(lock: dict) -> list[str]:
 
     return errors
 ```
+
+### Dependency Graph Validation
+
+**Note:** In v3, there is no dependency graph to validate since only direct dependencies are tracked. This section is retained for v2 compatibility.
+
+If migrating from v2 to v3, the `direct`, `requires`, and `required_by` fields can be safely ignored.
 
 ### Integrity Verification
 
@@ -624,19 +523,87 @@ Warning: meta-kb source URL differs between graft.yaml and graft.lock
 
 **Resolution**: Update lock file source to match graft.yaml.
 
+## Migration from v2 to v3
+
+### Changes
+
+v3 removes transitive dependency tracking:
+
+**Removed fields:**
+- `direct` - All dependencies are now direct
+- `requires` - No longer tracked
+- `required_by` - No longer tracked
+
+**Preserved fields:**
+- `source` - Git URL or path (unchanged)
+- `ref` - Consumed git ref (unchanged)
+- `commit` - Resolved commit hash (unchanged)
+- `consumed_at` - Timestamp (unchanged)
+
+### Migration Steps
+
+**Automated migration (recommended):**
+```bash
+graft migrate-lock --to v3
+```
+
+**Manual migration:**
+1. Read v2 lock file
+2. Filter to only `direct: true` entries
+3. Remove `direct`, `requires`, `required_by` fields
+4. Write v3 lock file
+
+**Example transformation:**
+
+```yaml
+# v2 (before)
+apiVersion: graft/v0
+dependencies:
+  meta-kb:
+    source: "..."
+    ref: "v2.0.0"
+    commit: "abc123..."
+    consumed_at: "2026-01-31T10:30:00Z"
+    direct: true
+    requires: ["standards-kb"]
+    required_by: []
+
+  standards-kb:
+    source: "..."
+    ref: "v1.5.0"
+    commit: "def456..."
+    consumed_at: "2026-01-31T10:30:00Z"
+    direct: false
+    requires: []
+    required_by: ["meta-kb"]
+```
+
+```yaml
+# v3 (after)
+apiVersion: graft/v0
+dependencies:
+  meta-kb:
+    source: "..."
+    ref: "v2.0.0"
+    commit: "abc123..."
+    consumed_at: "2026-01-31T10:30:00Z"
+```
+
+**Note:** Transitive dependency `standards-kb` is removed. If needed, add it as a direct dependency in `graft.yaml`.
+
 ## Lock File History (Optional Future Enhancement)
 
 Could optionally include history:
 
 ```yaml
-version: 1
+apiVersion: graft/v0
 
 dependencies:
   meta-kb:
     source: "git@github.com:org/meta-kb.git"
     ref: "v2.0.0"
     commit: "def456..."
-    consumed_at: "2026-01-01T10:30:00Z"
+    consumed_at: "2026-01-31T10:30:00Z"
     history:
       - ref: "v1.0.0"
         commit: "abc123..."
@@ -651,11 +618,32 @@ dependencies:
 ## Related
 
 - [Specification: graft.yaml Format](./graft-yaml-format.md)
+- [Specification: Dependency Layout](./dependency-layout.md)
 - [Specification: Core Operations](./core-operations.md)
 - [Decision 0004: Atomic Upgrades](../decisions/decision-0004-atomic-upgrades.md)
+- [Decision 0007: Flat-Only Dependency Model](../decisions/decision-0007-flat-only-dependencies.md)
 
 ## References
 
 - YAML Specification: https://yaml.org/spec/
 - ISO 8601 (datetime format): https://en.wikipedia.org/wiki/ISO_8601
 - Git commit hashing: https://git-scm.com/book/en/v2/Git-Internals-Git-Objects
+
+## Changelog
+
+- **2026-01-31 (v3.0)**: Flat-only dependency model
+  - Removed transitive dependency tracking
+  - Removed fields: `direct`, `requires`, `required_by`
+  - Simplified ordering to alphabetical only
+  - Added migration guide from v2 to v3
+  - Updated all examples
+  - Supersedes v2
+
+- **2026-01-05 (v2.0)**: Extended lock file
+  - Added transitive dependency tracking
+  - Added fields: `direct`, `requires`, `required_by`
+  - Introduced ordering convention (direct first, then transitive)
+
+- **2026-01-01 (v1.0)**: Initial draft
+  - Basic lock file structure
+  - Core fields: source, ref, commit, consumed_at

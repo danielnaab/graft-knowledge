@@ -1,22 +1,65 @@
 ---
 title: "Dependency Layout Specification"
-date: 2026-01-05
+date: 2026-01-31
 status: draft
-version: v2
+version: v3
+supersedes: v2
 ---
 
 # Dependency Layout Specification
 
 ## Overview
 
-This specification defines how Graft organizes dependencies on disk to maximize ergonomics for knowledge base consumption while avoiding common package manager pitfalls.
+This specification defines how Graft organizes dependencies on disk using a **flat-only dependency model**.
 
 **Design Goals:**
 1. Enable ergonomic markdown linking between repositories
-2. Support recursive dependencies (grafts depending on grafts)
-3. Avoid path length issues, duplication, and naming conflicts
-4. Provide predictable, short paths for human use
-5. Enable efficient storage and reproducible builds
+2. Provide predictable, short paths for human use
+3. Avoid path length issues and naming conflicts
+4. Leverage git submodules for native git integration
+5. Enable reproducible builds via lock files
+
+**Key Change from v2:** Graft no longer resolves transitive dependencies. Each project declares and manages only its direct dependencies. This aligns with Graft's purpose: dependencies are **influences** that shape your repository, not **components** that couple at runtime.
+
+---
+
+## Flat-Only Dependency Model
+
+### Core Principle
+
+**Each project declares only its direct dependencies.** Transitive dependencies (dependencies of dependencies) are not automatically resolved or cloned.
+
+If you reference content from a dependency, you must declare it as YOUR direct dependency.
+
+### Why Flat-Only Works
+
+Graft dependencies are fundamentally different from traditional package dependencies:
+
+| Aspect | npm/pip package | Graft |
+|--------|-----------------|-------|
+| Consumption | Import and call at runtime | Reference and apply patterns |
+| Output | Library code you depend on | Files committed to your repo |
+| Coupling | Tight (API contracts) | Loose (output files) |
+| Updates | Must maintain compatibility | Can diverge, you own result |
+
+**Grafts are influences, not components:**
+- They produce **output** (files in your repository)
+- That output is **committed to your repo**
+- Downstream sees YOUR content, not the original dependency chain
+- Dependencies of your dependencies are their implementation details
+
+### Implications
+
+**For consumers:**
+- You only see and manage dependencies YOU declared
+- No hidden transitive dependencies to track
+- Simpler mental model: "my deps, my responsibility"
+- If you need content from a transitive, add it as a direct dependency
+
+**For graft authors:**
+- Migrations must be self-contained (bundle what you need)
+- Cannot assume consumers have your dependencies
+- Document which grafts complement yours (ecosystem guidance)
 
 ---
 
@@ -24,44 +67,34 @@ This specification defines how Graft organizes dependencies on disk to maximize 
 
 ### How Dependencies Are Consumed
 
-Knowledge base dependencies differ from code dependencies in critical ways:
-
 **1. Direct Reference** - Markdown links to dependency content
 ```markdown
 [Architecture Patterns](../.graft/meta-kb/docs/architecture.md)
 ![Diagram](../.graft/meta-kb/assets/flow.svg)
 ```
 
-**2. Transclusion** - Including content from dependencies
-```markdown
-<!-- Include shared template -->
-{{include ../.graft/templates/header.md}}
-```
-
-**3. Asset Usage** - Images, diagrams, files referenced in builds
+**2. Asset Usage** - Images, diagrams, files referenced in builds
 ```bash
 # Copy shared assets
 cp .graft/brand-kb/logos/*.svg public/
 ```
 
-**4. Search and Indexing** - Tools scanning dependency content
+**3. Search and Indexing** - Tools scanning dependency content
 ```bash
 # Index all knowledge
 grep -r "concept" . .graft/*/docs/
 ```
 
-**5. Script Execution** - Running tools from dependencies
+**4. Script Execution** - Running migration/utility commands
 ```bash
-# Use dep's validation script
-.graft/standards-kb/scripts/validate.sh
+# Run migration from dependency
+graft upgrade meta-kb --to v2.0.0
 ```
 
-**6. Recursive Reference** - Dependencies referencing their own dependencies
-```
-your-project depends on meta-kb
-  meta-kb depends on standards-kb
-    standards-kb depends on templates-kb
-```
+**5. Pattern Application** - Using dependencies as templates/guides
+- Read documentation
+- Apply patterns to your code
+- Generate files using dependency's commands
 
 ### Critical Requirements
 
@@ -69,416 +102,210 @@ From these patterns, we derive:
 
 - **Short paths**: Human-friendly linking `../.graft/dep-name/`
 - **Predictable locations**: Always know where a dep lives
-- **Deduplication**: Don't clone same dep+version multiple times
-- **Isolation**: Each dep can reference its own dependencies
-- **Conflict detection**: Explicitly fail on version conflicts
 - **No magic**: Transparent, inspectable structure
+- **Git-native**: Works with standard git tools
+- **Self-contained migrations**: Each graft bundles what it needs
 
 ---
 
-## Package Manager Pitfalls
+## Directory Structure
 
-### What Other Systems Got Wrong
-
-**npm pre-v3: Nested node_modules**
-```
-node_modules/
-  a/
-    node_modules/
-      b/
-        node_modules/
-          c/  # Path length issues on Windows
-```
-Problems:
-- Extreme duplication
-- Path length limits
-- Inefficient disk usage
-
-**npm v3+: Hoisting and flattening**
-```
-node_modules/
-  a/
-  b/  # Hoisted from a's deps
-  c/  # Hoisted from b's deps
-```
-Problems:
-- Non-deterministic structure
-- Phantom dependencies (using undeclared deps)
-- Complex resolution algorithm
-
-**Python pip: Global namespace**
-Problems:
-- Only one version per environment
-- Dependency conflicts hard to resolve
-- No isolation between projects
-
-**Go early GOPATH: Rigid structure**
-Problems:
-- Requires specific directory layout
-- Global workspace, no isolation
-
-### What They Got Right
-
-Successful patterns:
-- **Lockfiles** (npm, yarn, poetry, bundler) - Reproducibility
-- **Semantic versioning** - Clear expectations
-- **Deduplication where possible** - Efficiency
-- **Explicit resolution** (Go modules) - Predictability
-- **Content-addressed storage** (pnpm) - Efficiency
-
----
-
-## Recursive Dependency Resolution Strategies
-
-### Strategy Comparison
-
-#### 1. Nested Layout (npm pre-v3)
-
-```
-.graft/
-  meta-kb/
-    .graft/
-      standards-kb/
-        .graft/
-          templates-kb/
-```
-
-**Advantages:**
-- Complete isolation
-- Simple mental model
-- No conflicts possible
-
-**Disadvantages:**
-- Massive duplication if shared deps
-- Deep paths (ergonomics suffer)
-- Inefficient disk usage
-- Can't reference peer dependencies
-
-**Assessment:** Too many downsides for knowledge bases
-
----
-
-#### 2. Flat with Hoisting (npm v3+)
-
-```
-.graft/
-  meta-kb/          # Your dep
-  standards-kb/     # Hoisted from meta-kb
-  templates-kb/     # Hoisted from standards-kb
-```
-
-**Advantages:**
-- Efficient (no duplication)
-- Short paths
-- Works well when deps align
-
-**Disadvantages:**
-- Non-deterministic structure
-- Phantom dependencies (can use undeclared deps)
-- Complex resolution logic
-- Hard to understand which dep depends on what
-
-**Assessment:** Too much implicit behavior
-
----
-
-#### 3. Flat with Namespacing (Go modules style)
-
-```
-.graft/
-  github.com/org/meta-kb/
-  github.com/org/standards-kb/
-  github.com/other/templates-kb/
-```
-
-**Advantages:**
-- No name collisions
-- Predictable structure
-- Explicit source
-
-**Disadvantages:**
-- Long paths (ergonomics suffer)
-- URL in path is awkward for linking
-- Different repos can have same name
-
-**Assessment:** Paths too long for ergonomics
-
----
-
-#### 4. Flat with Explicit Resolution (Recommended)
+### Flat-Only Layout
 
 ```
 project/
-├── graft.yaml       # Direct dependencies
-├── graft.lock       # Extended: all resolved deps (direct + transitive)
-└── .graft/
-    ├── meta-kb/         # Direct dep
-    ├── standards-kb/    # meta-kb's dep (flattened)
-    └── templates-kb/    # standards-kb's dep (flattened)
+├── .gitmodules         # Git's native submodule tracking (optional)
+├── graft.yaml          # Graft's semantic configuration
+├── graft.lock          # Consumed state (migrations, versions)
+└── .graft/             # Direct dependencies only
+    ├── meta-kb/        # Direct dependency
+    └── coding-standards/  # Direct dependency
 ```
 
-**Advantages:**
-- Short, predictable paths: `.graft/<name>/`
-- Efficient (deduplication)
-- Explicit (lock file shows all consumed deps)
-- No phantom dependencies
-- Tooling can validate and visualize
-- Conflict detection
-- Single source of truth (no separate tree file)
+**Key characteristics:**
+- Only **direct dependencies** are cloned to `.graft/`
+- Each dependency is a git repository (optionally managed as submodule)
+- Paths are short and predictable: `.graft/<name>/`
+- No transitive dependencies in `.graft/`
 
-**Disadvantages:**
-- Requires dependency resolution algorithm
-- Must detect and fail on version conflicts
+### Two-Layer Architecture
 
-**Assessment:** Best balance for knowledge bases
+Graft can optionally integrate with git submodules for the cloning layer:
+
+| Layer | File | Responsibility |
+|-------|------|----------------|
+| **Physical** | `.gitmodules` | Git's tracking of where repos are, what commit |
+| **Semantic** | `graft.yaml` + `graft.lock` | Changes, migrations, consumed state |
+
+**Physical layer (Git):**
+- Handles cloning, checkout, commit pinning
+- Enables `git clone --recursive` workflow
+- Familiar to git users
+
+**Semantic layer (Graft):**
+- Tracks consumption state (when migrations ran)
+- Manages change model and migrations
+- Provides upgrade/verification operations
 
 ---
 
-#### 5. Content-Addressed with Virtual Trees (pnpm style)
+## Git Submodules Integration
 
-```
-.graft/
-  .store/
-    meta-kb@abc123/
-    standards-kb@def456/
-  meta-kb -> .store/meta-kb@abc123/
-  standards-kb -> .store/standards-kb@def456/
-```
+### Why Submodules Work with Flat-Only
 
-**Advantages:**
-- Maximum deduplication
-- Efficient for monorepos
+Previous exploration (2026-01-12) rejected submodules due to:
+1. **Nested paths** - Transitives create deep nesting → **Eliminated** (no transitives)
+2. **No deduplication** - Same dep cloned multiple times → **Not needed** (no shared transitives)
+3. **No conflict detection** - Different versions coexist → **Not applicable** (no transitive conflicts)
 
-**Disadvantages:**
-- Symlinks can be fragile
-- More complex
-- Overkill for typical use cases
+The flat-only model removes all previous blockers.
 
-**Assessment:** Possibly future optimization
+### Benefits
 
----
-
-## Recommended Design: Flat Layout with Extended Lock File
-
-### Core Design
-
-**Directory Structure:**
-```
-project/
-├── graft.yaml          # User-edited: direct dependencies
-├── graft.lock          # Auto-generated: ALL resolved deps (direct + transitive)
-└── .graft/
-    ├── meta-kb/        # Dependency: cloned once, used everywhere
-    ├── standards-kb/   # Transitive dep from meta-kb
-    └── templates-kb/   # Transitive dep from standards-kb
+**1. Native git workflow:**
+```bash
+git clone --recursive https://github.com/myorg/myproject.git
+# Dependencies are already cloned!
 ```
 
-**Key Principles:**
-1. Remove `/deps/` subdirectory - it's superfluous. Place dependencies directly in `.graft/`.
-2. Lock file contains ALL resolved dependencies (not just direct ones)
-3. Single source of truth - no separate tree file needed
+**2. Familiar commands:**
+```bash
+git submodule update --init     # Clone deps
+git submodule update --remote   # Update deps
+```
 
-### File Formats
-
-**graft.yaml** (unchanged)
+**3. CI/CD compatibility:**
 ```yaml
-apiVersion: graft/v0
+# GitHub Actions - no special Graft setup for cloning
+- uses: actions/checkout@v4
+  with:
+    submodules: recursive
+```
+
+**4. IDE integration:**
+- VS Code, IntelliJ, etc. understand submodules
+- Navigation, search work out of the box
+
+### What Graft Adds
+
+Git submodules alone provide:
+- Cloning and checkout management
+- Commit pinning
+
+Graft adds:
+- Change tracking (`graft status` shows pending changes)
+- Migration execution (`graft upgrade` runs migrations)
+- Verification (`verify` commands after migration)
+- Atomic rollback (on migration failure)
+- Human-readable refs (submodules only store commit hash)
+
+### Example Workflow
+
+```bash
+# Add dependency (creates submodule + updates graft files)
+graft add meta-kb git@github.com:org/meta-kb.git#v2.0.0
+
+# Check status
+graft status
+# Shows: meta-kb v2.0.0, no updates
+
+# Upgrade (runs migrations, updates submodule)
+graft upgrade meta-kb --to v3.0.0
+
+# Commit changes
+git add .gitmodules .graft/ graft.yaml graft.lock
+git commit -m "Upgrade meta-kb to v3.0.0"
+```
+
+---
+
+## Migration Self-Containment
+
+### The Constraint
+
+**Migrations MUST be self-contained.** They cannot reference files in transitive dependencies.
+
+**Invalid migration:**
+```yaml
+commands:
+  migrate-v2:
+    # BAD - references transitive dependency
+    run: cp ${DEP_ROOT}/../standards-kb/template.md ./
+```
+
+**Valid migration:**
+```yaml
+commands:
+  migrate-v2:
+    # GOOD - uses bundled content
+    run: cp ${DEP_ROOT}/bundled/template.md ./
+```
+
+### Bundling Strategy
+
+If your graft depends on content from other grafts, **bundle it**:
+
+```
+my-graft/
+  bundled/
+    standards-kb/       # Copied from standards-kb at publish time
+      template.md
+      config.yaml
+  commands/
+  graft.yaml
+```
+
+### Documenting Complementary Grafts
+
+Use README to document which grafts work well together:
+
+```markdown
+# My Graft
+
+This graft provides web app scaffolding.
+
+## Recommended Complementary Grafts
+
+- **coding-standards** - Provides linting and style configs
+- **security-policies** - Provides security checklists
+
+Add these as direct dependencies:
+​```yaml
 deps:
-  meta-kb: "https://github.com/org/meta.git#v2.0.0"
+  web-app-template: "..."
+  coding-standards: "..."
+  security-policies: "..."
+​```
 ```
 
-**graft.lock** (EXTENDED - includes all resolved dependencies)
-```yaml
-apiVersion: graft/v0
+---
 
-# All resolved dependencies (direct + transitive)
-# Ordered for readability (direct first, then transitive alphabetically)
-dependencies:
-  meta-kb:
-    source: "https://github.com/org/meta.git"
-    ref: "v2.0.0"
-    commit: "abc123..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: true              # NEW: Is this a direct dependency?
-    requires: ["standards-kb"] # NEW: What this dep needs (list of dep names)
+## Cross-References
 
-  standards-kb:
-    source: "https://github.com/org/standards.git"
-    ref: "v1.5.0"
-    commit: "def456..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: false
-    required_by: ["meta-kb"]  # NEW: Which deps need this (for auditing)
-    requires: ["templates-kb"]
+### External URLs (Recommended)
 
-  templates-kb:
-    source: "https://github.com/org/templates.git"
-    ref: "v1.0.0"
-    commit: "ghi789..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: false
-    required_by: ["standards-kb"]
-    requires: []               # Leaf dependency
+For documentation links that humans read:
+
+```markdown
+<!-- Instead of relative path -->
+[Pattern](../.graft/standards-kb/patterns.md)
+
+<!-- Use external URL -->
+[Pattern](https://github.com/org/standards-kb/blob/v1.5.0/patterns.md)
 ```
 
-**Why this format?**
+**Benefits:**
+- Always works, regardless of what dependencies consumer has
+- Works in published docs (GitHub, GitBook)
+- No coupling to consumer's dependency choices
 
-1. **Single source of truth**: All consumed versions in one place
-2. **Follows conventions**: npm, yarn, poetry all include transitive deps in lock files
-3. **Enables features**:
-   - Upgrade preview: "Upgrading meta-kb will also update 2 transitive deps"
-   - Garbage collection: "templates-kb is no longer needed, remove from .graft/"
-   - Security auditing: "Check all consumed deps for vulnerabilities"
-   - Dependency visualization: Can reconstruct tree from requires/required_by
-4. **Reproducible**: Pins exact versions of ALL dependencies, not just direct
-5. **No redundant files**: Don't need separate tree metadata
+### Explicit Dependencies
 
-### Dependency Resolution Algorithm
+If you need content from another graft **for your migrations**:
 
-```python
-@dataclass
-class ResolvedDep:
-    source: str
-    ref: str
-    commit: str
-    consumed_at: str
-    direct: bool
-    requires: list[str]
-    required_by: list[str]
-
-def resolve_dependencies(
-    direct_deps: dict[str, str]
-) -> dict[str, ResolvedDep]:
-    """
-    Resolve all dependencies recursively with conflict detection.
-
-    Returns flat map of name -> ResolvedDep suitable for graft.lock.
-    Raises ConflictError if incompatible versions required.
-    """
-    resolved: dict[str, ResolvedDep] = {}
-    queue: list[tuple[str, str, bool, str | None]] = []
-
-    # Initialize queue with direct dependencies
-    for name, url in direct_deps.items():
-        queue.append((name, url, True, None))  # (name, url, is_direct, parent)
-
-    while queue:
-        name, url, is_direct, parent = queue.pop(0)
-
-        source = parse_source(url)  # Strip #ref
-        ref = parse_ref(url)        # Extract ref
-
-        # Check if already resolved
-        if name in resolved:
-            existing = resolved[name]
-            if existing.source == source and existing.ref == ref:
-                # Same dep, same version - just update required_by
-                if parent and parent not in existing.required_by:
-                    existing.required_by.append(parent)
-                continue
-            else:
-                # CONFLICT: same name, different version
-                raise ConflictError(
-                    f"Dependency conflict: {name}\n"
-                    f"  Required by {parent}: {source}#{ref}\n"
-                    f"  Already resolved: {existing.source}#{existing.ref}\n"
-                    f"  Required by: {', '.join(existing.required_by)}"
-                )
-
-        # Clone/fetch dependency to .graft/<name>/
-        dep_path = f".graft/{name}"
-        clone_or_fetch(url, dep_path)
-
-        # Read its graft.yaml to find transitive dependencies
-        dep_config = parse_config(f"{dep_path}/graft.yaml")
-        transitive_deps = dep_config.deps or {}
-
-        # Record resolution
-        resolved[name] = ResolvedDep(
-            source=source,
-            ref=ref,
-            commit=get_commit_sha(dep_path),
-            consumed_at=now(),
-            direct=is_direct,
-            requires=list(transitive_deps.keys()),
-            required_by=[parent] if parent else []
-        )
-
-        # Add transitive deps to queue
-        for trans_name, trans_url in transitive_deps.items():
-            queue.append((trans_name, trans_url, False, name))
-
-    return resolved
-
-def write_lock_file(resolved: dict[str, ResolvedDep]) -> None:
-    """Write extended graft.lock with all resolved dependencies."""
-    lock_data = {
-        "apiVersion": "graft/v0",
-        "dependencies": {}
-    }
-
-    # Order: direct deps first, then transitive (alphabetically)
-    direct = {k: v for k, v in resolved.items() if v.direct}
-    transitive = {k: v for k, v in resolved.items() if not v.direct}
-
-    for deps in [direct, transitive]:
-        for name, dep in sorted(deps.items()):
-            lock_data["dependencies"][name] = {
-                "source": dep.source,
-                "ref": dep.ref,
-                "commit": dep.commit,
-                "consumed_at": dep.consumed_at,
-                "direct": dep.direct,
-                "requires": dep.requires,
-                "required_by": dep.required_by
-            }
-
-    write_yaml("graft.lock", lock_data)
-```
-
-### Conflict Handling
-
-**Scenario: Version Conflict**
-```
-Project depends on:
-  - meta-kb v2.0.0 (requires standards-kb v1.5.0)
-  - docs-kb v1.0.0 (requires standards-kb v1.0.0)
-
-Result: CONFLICT
-```
-
-**Resolution Strategy:**
-1. **Detect conflict** during resolution
-2. **Fail explicitly** with clear error message
-3. **User must resolve** by:
-   - Upgrading meta-kb or docs-kb to compatible versions
-   - Using version ranges if supported (future)
-   - Forking and patching one dependency
-
-**Why explicit failure?**
-- Knowledge bases are human-consumed
-- Version conflicts often mean incompatible content structures
-- Better to fail than have inconsistent content
-- Encourages ecosystem coordination
-
-### Migration Path
-
-**Phase 1: Support both layouts**
-- Accept `.graft/deps/` (current)
-- Accept `.graft/` (new)
-- Generate graft-tree.json on resolve
-
-**Phase 2: Migrate existing projects**
-- Add `graft migrate-layout` command
-- Moves `.graft/deps/*` to `.graft/*`
-- Generates graft-tree.json
-
-**Phase 3: Deprecate old layout**
-- Warn on `.graft/deps/` usage
-- Update docs to show new layout
-
-**Phase 4: Remove old layout support**
-- Only support `.graft/<name>/`
+1. Bundle that content in your graft
+2. Document that consumers should add both grafts
+3. Your migration uses YOUR bundled content, not references to other grafts
 
 ---
 
@@ -488,89 +315,101 @@ Result: CONFLICT
 
 **Ergonomic linking:**
 ```markdown
-<!-- Before: Long path -->
-[Pattern](../.graft/deps/meta-kb/docs/pattern.md)
-
-<!-- After: Shorter -->
+<!-- Short, predictable paths -->
 [Pattern](../.graft/meta-kb/docs/pattern.md)
+[Diagram](../.graft/meta-kb/assets/flow.svg)
 ```
 
-**Predictable structure:**
+**Simple mental model:**
 ```bash
-# Always know where deps are
+# Only YOUR dependencies
 ls .graft/
-# meta-kb  standards-kb  templates-kb
+# meta-kb  coding-standards
 
-# All consumed versions in lock file
+# Lock file shows what you consumed
 cat graft.lock
-# Shows: meta-kb (direct), standards-kb (transitive), templates-kb (transitive)
+# Shows: meta-kb v2.0.0, coding-standards v1.5.0
 ```
 
-**No surprises:**
-- Can't accidentally use undeclared dependencies
-- Conflicts fail loudly and early
-- Clear error messages guide resolution
+**No hidden complexity:**
+- Only dependencies YOU declared are present
+- No transitive dependency resolution
+- No version conflict between transitives (doesn't apply)
+- Clear: "If I need it, I declare it"
+
+**Git-native workflow:**
+```bash
+# Clone with dependencies
+git clone --recursive myproject
+
+# Dependencies are already there
+cd myproject && ls .graft/
+```
+
+### For Graft Authors
+
+**Self-contained by design:**
+- Bundle what your migrations need
+- No assumptions about consumer's dependencies
+- Clear contract: "Here's what I provide"
+
+**Simple upgrade path:**
+- Migrations run in isolation
+- No coordination with transitive dependency migrations
+- You control your content and commands
 
 ### For Tool Builders
 
 **Validation:**
 ```bash
-# Check all deps match lock file
-graft validate --check-deps
+# Check deps match lock file
+graft validate integrity
 
-# Show full dependency tree (reads from graft.lock)
-graft tree --show-all
+# Validate configuration
+graft validate config
 ```
 
-**Visualization:**
+**Inspection:**
 ```bash
-# Graph the dependency tree (from graft.lock requires/required_by)
-graft tree --graph | dot -Tpng > deps.png
+# Show dependency metadata
+graft inspect meta-kb
+
+# Show a dependency's own dependencies
+graft inspect meta-kb --deps
 ```
 
-**Analysis:**
-```bash
-# Find unused dependencies
-graft analyze --unused
+---
 
-# Check for dependency cycles
-graft analyze --cycles
-```
+## Package Manager Comparison
+
+### How Graft Differs
+
+| Aspect | Go Modules | npm | Cargo | Graft (Flat) |
+|--------|------------|-----|-------|--------------|
+| Transitives | Yes (MVS) | Yes (hoist) | Yes (semver) | **No** |
+| Lock file | go.sum | package-lock | Cargo.lock | graft.lock |
+| Version scheme | semver | semver | semver | **git refs** |
+| What's managed | Libraries | Packages | Crates | **Influences** |
+| Conflict handling | MVS picks | Nesting | Semver | **N/A** |
+
+**Key distinction:** Traditional package managers manage **components** that execute at runtime (A calls B calls C, so C must be present). Graft manages **influences** that shape your repo through patterns and migrations.
+
+### Partial Precedents
+
+- **Early Go (GOPATH)** - No transitive resolution, each package managed its own deps
+- **Vendoring** - Commit deps to repo, downstream gets committed results
+- **Git submodules (non-recursive)** - Shallow, direct-only cloning
+
+**What's unique about Graft:**
+- Combines flat-only with semantic lock file + migrations
+- "Influences" vs "components" - you absorb patterns, not link libraries
+- Grafted content is committed, not linked at runtime
 
 ---
 
 ## Open Questions
 
-### 1. Version Ranges?
-
-Should we support version ranges in graft.yaml?
-
-```yaml
-deps:
-  meta-kb: "https://github.com/org/meta.git#^v2.0.0"
-```
-
-**Pros:** More flexibility, easier to avoid conflicts
-**Cons:** Less reproducible, complexity
-**Decision:** Start without, add if needed
-
-### 2. Peer Dependencies?
-
-Should deps declare what they expect consumer to have?
-
-```yaml
-deps:
-  standards-kb: "..."
-
-peer_deps:
-  templates-kb: "v1.0.0"  # Must be provided by consumer
-```
-
-**Pros:** Solves some conflict scenarios
-**Cons:** Adds complexity
-**Decision:** Defer until we see the need
-
-### 3. Workspace Support?
+### Workspace Support
 
 Support monorepos with multiple projects sharing deps?
 
@@ -583,64 +422,37 @@ workspace/
   .graft/  # Shared deps
 ```
 
-**Pros:** Efficiency for monorepos
-**Cons:** Complexity, scope creep
-**Decision:** Future enhancement
+**Decision:** Future enhancement, not part of v3 spec
 
----
+### Version Ranges
 
-## Implementation Plan
+Should we support version ranges in graft.yaml?
 
-### Phase 1: Core Resolution (Week 1)
-- [ ] Implement recursive dependency resolution algorithm
-- [ ] Extend graft.lock format to include all resolved deps (direct + transitive)
-- [ ] Add `direct`, `requires`, `required_by` fields to lock entries
-- [ ] Support both `.graft/deps/` and `.graft/` layouts
-- [ ] Add conflict detection and clear error messages
+```yaml
+deps:
+  meta-kb: "https://github.com/org/meta.git#^v2.0.0"
+```
 
-### Phase 2: Migration Support (Week 2)
-- [ ] Add `graft migrate-layout` command to move deps from /deps/ to root
-- [ ] Update lock file reader/writer for new format (backward compatible)
-- [ ] Update all documentation
-- [ ] Add warnings for old layout
-- [ ] Create migration guide
-
-### Phase 3: Tree Tooling (Week 3)
-- [ ] Add `graft tree` command to visualize dependencies (reads from graft.lock)
-- [ ] Add `graft validate --check-deps` to verify lock matches .graft/
-- [ ] Add `graft analyze --unused` to find deps no longer needed
-- [ ] Add `graft analyze --cycles` to detect circular dependencies
-
-### Phase 4: Optimization (Week 4)
-- [ ] Consider content-addressed storage for efficiency
-- [ ] Add parallel cloning for speed
-- [ ] Optimize for large dependency graphs
-- [ ] Performance testing and benchmarks
+**Decision:** Start without, add if needed based on ecosystem usage
 
 ---
 
 ## References
-
-- **Similar systems:**
-  - pnpm (content-addressed storage)
-  - Go modules (explicit minimal version selection)
-  - Bazel (explicit dependency graph)
 
 - **Related specifications:**
   - [graft.yaml Format](./graft-yaml-format.md)
   - [Lock File Format](./lock-file-format.md)
   - [Core Operations](./core-operations.md)
 
-- **Discussions:**
-  - User feedback on ergonomics
-  - Performance requirements
-  - Conflict resolution strategies
+- **Related decisions:**
+  - [Decision 0007: Flat-Only Dependency Model](../decisions/decision-0007-flat-only-dependencies.md)
+  - [Analysis Note: Flat-Only Exploration](../../notes/2026-01-31-flat-only-dependency-analysis.md)
 
 ---
 
 ## Appendix: Example Scenarios
 
-### Scenario 1: Simple Project
+### Scenario 1: Simple Project (Flat-Only)
 
 **Setup:**
 ```yaml
@@ -653,11 +465,9 @@ deps:
 ```
 project/
 ├── graft.yaml
-├── graft.lock       # Extended: includes all 3 deps
+├── graft.lock
 └── .graft/
-    ├── meta-kb/
-    ├── standards-kb/  (from meta-kb)
-    └── templates-kb/  (from standards-kb)
+    └── meta-kb/      # Only direct dependency
 ```
 
 **graft.lock contents:**
@@ -668,28 +478,7 @@ dependencies:
     source: "https://github.com/org/meta.git"
     ref: "v2.0.0"
     commit: "abc123..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: true
-    requires: ["standards-kb"]
-    required_by: []
-
-  standards-kb:
-    source: "https://github.com/org/standards.git"
-    ref: "v1.5.0"
-    commit: "def456..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: false
-    requires: ["templates-kb"]
-    required_by: ["meta-kb"]
-
-  templates-kb:
-    source: "https://github.com/org/templates.git"
-    ref: "v1.0.0"
-    commit: "ghi789..."
-    consumed_at: "2026-01-05T10:30:00Z"
-    direct: false
-    requires: []
-    required_by: ["standards-kb"]
+    consumed_at: "2026-01-31T10:30:00Z"
 ```
 
 **Linking:**
@@ -697,96 +486,99 @@ dependencies:
 [Concept](../.graft/meta-kb/docs/concept.md)
 ```
 
-### Scenario 2: Conflict Detection
+### Scenario 2: Multiple Direct Dependencies
 
 **Setup:**
 ```yaml
 # graft.yaml
 deps:
   meta-kb: "https://github.com/org/meta.git#v2.0.0"
-  docs-kb: "https://github.com/org/docs.git#v1.0.0"
+  coding-standards: "https://github.com/org/standards.git#v1.5.0"
 ```
 
-Where:
-- meta-kb v2.0.0 requires standards-kb v1.5.0
-- docs-kb v1.0.0 requires standards-kb v1.0.0
-
-**Result:**
-```
-Error: Dependency conflict detected
-
-Dependency: standards-kb
-  Required by meta-kb: v1.5.0
-  Required by docs-kb: v1.0.0
-
-These versions are incompatible. Please:
-1. Check if newer versions align
-2. Contact maintainers about compatibility
-3. Use only one of the conflicting dependencies
-```
-
-### Scenario 3: Shared Dependency
-
-**Setup:**
-```yaml
-# graft.yaml
-deps:
-  meta-kb: "https://github.com/org/meta.git#v2.0.0"
-  docs-kb: "https://github.com/org/docs.git#v2.0.0"
-```
-
-Where both require templates-kb v1.0.0
-
-**Result:**
+**After `graft resolve`:**
 ```
 project/
 └── .graft/
     ├── meta-kb/
-    ├── docs-kb/
-    ├── standards-kb/  (from meta-kb)
-    └── templates-kb/  (shared - cloned once)
+    └── coding-standards/
 ```
 
-**graft.lock shows sharing via required_by:**
+**graft.lock shows both:**
 ```yaml
 apiVersion: graft/v0
 dependencies:
+  coding-standards:
+    source: "https://github.com/org/standards.git"
+    ref: "v1.5.0"
+    commit: "def456..."
+    consumed_at: "2026-01-31T10:30:00Z"
+
   meta-kb:
-    direct: true
-    requires: ["standards-kb", "templates-kb"]
-    required_by: []
-
-  docs-kb:
-    direct: true
-    requires: ["templates-kb"]
-    required_by: []
-
-  standards-kb:
-    direct: false
-    requires: []
-    required_by: ["meta-kb"]
-
-  templates-kb:
-    direct: false
-    requires: []
-    required_by: ["meta-kb", "docs-kb"]  # Shared by both!
+    source: "https://github.com/org/meta.git"
+    ref: "v2.0.0"
+    commit: "abc123..."
+    consumed_at: "2026-01-31T10:30:00Z"
 ```
 
-**Key insight:** When `templates-kb` appears in multiple `required_by` lists, it's a shared dependency cloned only once.
+**Note:** Alphabetical ordering for consistency.
+
+### Scenario 3: Complementary Grafts
+
+`meta-kb` uses content from `standards-kb` internally. How does this work?
+
+**Option 1: meta-kb bundles what it needs**
+```
+meta-kb/
+  bundled/
+    standards-content/
+      patterns.md
+  commands/
+    migrate: uses bundled/standards-content/
+```
+
+**Option 2: meta-kb documents the recommendation**
+```markdown
+# meta-kb README
+
+## Recommended Setup
+
+This graft works best with:
+- **standards-kb** - Provides coding patterns
+- **templates-kb** - Provides file templates
+
+Add both:
+​```yaml
+deps:
+  meta-kb: "..."
+  standards-kb: "..."
+  templates-kb: "..."
+​```
+```
+
+**Consumer sees:**
+```
+.graft/
+├── meta-kb/          # Direct dependency
+├── standards-kb/     # Direct dependency (you added it)
+└── templates-kb/     # Direct dependency (you added it)
+```
 
 ---
 
 ## Changelog
 
-- **2026-01-05 (v2.1)**: Simplified to use extended graft.lock
-  - Removed graft-tree.json (redundant metadata file)
+- **2026-01-31 (v3.0)**: Flat-only dependency model
+  - Removed transitive dependency resolution
+  - Simplified lock file (removed `direct`, `requires`, `required_by` fields)
+  - Added git submodules integration guidance
+  - Added migration self-containment requirements
+  - Updated examples to reflect flat-only model
+  - Supersedes v2
+
+- **2026-01-05 (v2.1)**: Extended lock file
   - Extended graft.lock to include all resolved dependencies
   - Added fields: `direct`, `requires`, `required_by`
-  - Follows npm/yarn/poetry conventions (transitive deps in lock)
-  - Updated all examples and algorithm
 
 - **2026-01-05 (v2.0)**: Initial draft
-  - Analyzed consumption patterns
-  - Evaluated recursive dependency strategies
-  - Proposed flat layout with explicit resolution
-  - Planned migration path
+  - Proposed flat layout with transitive resolution

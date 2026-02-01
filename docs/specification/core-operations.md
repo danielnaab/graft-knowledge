@@ -222,7 +222,7 @@ Fetching shared-utils...
 
 ### graft resolve
 
-**Purpose**: Clone or fetch dependencies specified in graft.yaml.
+**Purpose**: Clone or fetch **direct dependencies** specified in graft.yaml.
 
 **Syntax**:
 ```bash
@@ -231,12 +231,13 @@ graft resolve
 
 **Behavior**:
 1. Find and parse graft.yaml in current directory
-2. For each dependency:
+2. For each **direct dependency**:
    - If `.graft/<name>/` doesn't exist: clone from git URL
    - If `.graft/<name>/` exists and is a git repo: fetch and checkout ref
    - If `.graft/<name>/` exists but isn't a git repo: error
 3. Report resolution status for each dependency
 4. Auto-add `.graft` to `.gitignore` if not already present
+5. Optionally initialize git submodules (if using submodule integration)
 
 **Output** (success):
 ```
@@ -246,8 +247,8 @@ Dependencies: 2
 
 Resolving dependencies...
 
-✓ meta-kb: resolved to /path/to/project/.graft/meta-kb
-✓ standards-kb: resolved to /path/to/project/.graft/standards-kb
+✓ meta-kb: cloned to /path/to/project/.graft/meta-kb
+✓ coding-standards: cloned to /path/to/project/.graft/coding-standards
 
 Resolved: 2/2
 
@@ -263,7 +264,7 @@ Dependencies: 2
 Resolving dependencies...
 
 ✓ meta-kb: resolved to /path/to/project/.graft/meta-kb
-✗ standards-kb: Authentication failed
+✗ coding-standards: Authentication failed
   Suggestion: Check SSH key configuration
 
 Resolved: 1/2
@@ -276,10 +277,11 @@ Some dependencies failed to resolve.
 - `1` - One or more dependencies failed
 
 **Notes**:
+- Only **direct dependencies** are cloned (flat-only model)
 - Dependencies are stored in `.graft/<name>/` (flat layout)
 - Paths in output are absolute for clarity
 - `.graft` is auto-added to `.gitignore` to prevent committing dependencies
-- When using a custom `deps_directory`, symlinks are created in `.graft/<name>` pointing to the actual checkout location, ensuring stable paths for linking
+- If using git submodules, this command initializes and updates submodules
 
 
 ---
@@ -319,7 +321,6 @@ graft validate [mode] [options]
 3. Validate all required fields present
 4. Check commit hash format (40-char hex)
 5. Validate timestamp format (ISO 8601)
-6. Verify dependency graph consistency (requires/required_by)
 
 **Mode: integrity**
 1. For each dependency in lock file:
@@ -434,6 +435,117 @@ graft validate integrity
 # If mismatch, re-resolve
 graft resolve
 ```
+
+---
+
+### graft sync
+
+**Purpose**: Sync local `.graft/` directory to match lock file state.
+
+**Syntax**:
+```bash
+graft sync [<dep-name>]
+```
+
+**Use case**: After pulling changes from teammates who upgraded dependencies, sync your local checkouts to match the lock file.
+
+**Behavior**:
+1. Read graft.lock
+2. For each dependency (or specified dependency):
+   - Check if `.graft/<name>/` exists
+   - If exists: checkout the commit specified in lock file
+   - If doesn't exist: clone and checkout
+3. Update git submodules if applicable
+4. Do NOT run migrations (teammate already ran them)
+
+**Output**:
+```
+Syncing dependencies to lock file state...
+
+meta-kb: v2.0.0 (abc123...)
+  ✓ Checked out to commit abc123...
+
+coding-standards: v1.5.0 (def456...)
+  ✓ Already at correct commit
+
+All dependencies synced!
+```
+
+**When to use:**
+```bash
+# Teammate upgraded a dependency and pushed
+git pull
+
+# You see graft.lock changed
+git diff graft.lock
+
+# Sync your local checkouts
+graft sync
+```
+
+**Note:** This command does NOT run migrations. Migrations were already run by the person who upgraded and committed the lock file.
+
+---
+
+### graft inspect
+
+**Purpose**: Inspect metadata and dependencies of a graft.
+
+**Syntax**:
+```bash
+graft inspect <dep-name> [options]
+```
+
+**Options**:
+- `--deps`: Show graft's own dependencies
+- `--commands`: List available commands
+- `--changes`: Show recent changes
+- `--json`: Output as JSON
+
+**Behavior**:
+1. Read dependency's graft.yaml
+2. Display requested information
+
+**Output** (default):
+```
+Inspecting: meta-kb
+
+Metadata:
+  Name: meta-knowledge-base
+  Description: Shared knowledge base for meta-cognitive patterns
+  Version: v2.0.0
+
+Location: /path/to/project/.graft/meta-kb
+Source: git@github.com:org/meta-kb.git
+Current ref: v2.0.0
+```
+
+**Output** (with --deps):
+```
+Inspecting: meta-kb
+
+Dependencies:
+  standards-kb: git@github.com:org/standards.git#v1.5.0
+  templates-kb: git@github.com:org/templates.git#v1.0.0
+
+Note: These are meta-kb's dependencies.
+To use them, add them to YOUR graft.yaml.
+```
+
+**Output** (with --commands):
+```
+Inspecting: meta-kb
+
+Commands:
+  migrate-v2: Rename getUserData → fetchUserData
+  verify-v2: Verify v2 migration completed
+  changelog: Display changelog
+```
+
+**Use cases:**
+1. **Discovery**: "What does this graft depend on?"
+2. **Planning**: "If I add this graft, what else might I need?"
+3. **Debugging**: "What commands are available?"
 
 ---
 
@@ -661,4 +773,17 @@ Processing 15 files...
 - [Specification: Change Model](./change-model.md)
 - [Specification: graft.yaml Format](./graft-yaml-format.md)
 - [Specification: Lock File Format](./lock-file-format.md)
+- [Specification: Dependency Layout](./dependency-layout.md)
 - [Decision 0004: Atomic Upgrades](../decisions/decision-0004-atomic-upgrades.md)
+- [Decision 0007: Flat-Only Dependency Model](../decisions/decision-0007-flat-only-dependencies.md)
+
+## Changelog
+
+- **2026-01-31**: Updated for flat-only dependency model (v3)
+  - Updated `graft resolve` to clarify direct dependencies only
+  - Updated `graft validate` to remove dependency graph checks
+  - Added `graft sync` operation
+  - Added `graft inspect` operation
+  - Added references to Decision 0007
+
+- **2026-01-01**: Initial draft

@@ -172,6 +172,8 @@ changes:
 
 Defines executable commands that can be invoked by consumers or referenced by changes.
 
+**IMPORTANT:** All commands, especially migrations, MUST be self-contained. See [Migration Self-Containment](#migration-self-containment) below.
+
 ### Structure
 
 ```yaml
@@ -289,9 +291,148 @@ commands:
     description: "Migrate legacy code if it exists"
 ```
 
+---
+
+## Migration Self-Containment
+
+### The Constraint
+
+**All migration commands MUST be self-contained.** They cannot reference files from transitive dependencies (dependencies of your dependencies).
+
+This is a fundamental requirement of the flat-only dependency model introduced in v3.
+
+### Why Self-Containment?
+
+With flat-only dependencies:
+- Consumers only clone dependencies they explicitly declare
+- Your graft's dependencies are YOUR implementation details
+- Consumers don't have access to your dependencies' files
+
+If your migration needs content from another graft, you have two options:
+1. **Bundle it** - Copy needed files into your graft at publish time
+2. **Document it** - Tell consumers to add that graft as their own dependency
+
+### Invalid Migration Example
+
+```yaml
+commands:
+  migrate-v2:
+    # ❌ BAD - references transitive dependency
+    run: |
+      cp ${DEP_ROOT}/../standards-kb/template.md ./
+      cp ${DEP_ROOT}/../standards-kb/config.yaml ./config/
+```
+
+**Problem:** Consumer may not have `standards-kb` installed. It's YOUR dependency, not theirs.
+
+### Valid Migration Examples
+
+**Option 1: Bundle what you need**
+
+```yaml
+commands:
+  migrate-v2:
+    # ✅ GOOD - uses bundled content
+    run: |
+      cp ${DEP_ROOT}/bundled/template.md ./
+      cp ${DEP_ROOT}/bundled/config.yaml ./config/
+```
+
+```
+my-graft/
+  bundled/
+    template.md       # Copied from standards-kb at publish time
+    config.yaml
+  commands/
+  graft.yaml
+```
+
+**Option 2: Document required dependencies**
+
+```yaml
+# graft.yaml
+metadata:
+  name: "web-app-template"
+  description: "Web app scaffolding - works with coding-standards"
+
+commands:
+  init:
+    # References consumer's own dependencies
+    run: |
+      # Generate structure
+      mkdir -p src/ test/
+      # If consumer has coding-standards, use it
+      if [ -d ../.graft/coding-standards ]; then
+        cp ../.graft/coding-standards/.eslintrc ./
+      fi
+```
+
+```markdown
+# README.md
+
+## Installation
+
+Add both this graft and coding-standards:
+
+​```yaml
+deps:
+  web-app-template: "git@github.com:org/web-app.git#v2.0.0"
+  coding-standards: "git@github.com:org/standards.git#v1.5.0"
+​```
+```
+
+### Bundling Strategy
+
+If your graft depends on content from other grafts, bundle at **publish time**:
+
+```bash
+# Before tagging a release
+./scripts/bundle-deps.sh
+
+# Copies needed files from dependencies into bundled/
+cp -r .graft/standards-kb/templates/ bundled/standards-templates/
+cp -r .graft/config-lib/configs/ bundled/configs/
+
+# Commit bundled content
+git add bundled/
+git commit -m "Bundle dependencies for v2.0.0"
+git tag v2.0.0
+```
+
+This way, consumers get a self-contained graft.
+
+### Variables Available
+
+Your commands run in the **consumer's context**. These variables are available:
+
+- `${CONSUMER_ROOT}` - Consumer's repository root
+- `${DEP_ROOT}` - Your graft's root (in consumer's `.graft/<your-name>/`)
+
+**Do NOT use:**
+- `${DEP_ROOT}/../other-dep/` - Consumer may not have `other-dep`
+
+**Safe patterns:**
+```bash
+# Use content within your graft
+${DEP_ROOT}/scripts/migrate.sh
+${DEP_ROOT}/bundled/template.md
+
+# Write to consumer's repo
+${CONSUMER_ROOT}/src/generated.ts
+
+# Check for optional dependencies (consumer's choice)
+if [ -d "${CONSUMER_ROOT}/.graft/optional-dep" ]; then
+  # Use it
+fi
+```
+
+---
+
 ## Section: dependencies
 
 Declares dependencies on other Graft-enabled modules (optional).
+
+**Note:** In the flat-only model (v3), these are YOUR graft's dependencies. Consumers won't automatically get them. If consumers need these dependencies, document that in your README.
 
 ### Structure
 

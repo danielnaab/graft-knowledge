@@ -37,13 +37,21 @@ Each ADR follows a standard structure:
 
 ### Specification Enhancements (2026-01-05)
 
-- **[Decision 0005](./decision-0005-no-partial-resolution.md)**: No Partial Dependency Resolution
+- **[Decision 0005](./decision-0005-no-partial-resolution.md)**: No Partial Dependency Resolution ~~(superseded)~~
   - Explicitly reject partial resolution (violates atomicity & reproducibility)
-  - Document rationale and alternatives
+  - **Superseded by Decision 0007** - transitive deps no longer exist in flat-only model
 
 - **[Decision 0006](./decision-0006-dependency-update-events.md)**: Dependency Update Event Strategy
   - Use org-wide push events with polling fallback for update notification
   - Zero upstream configuration—leverage existing graft.yaml declarations
+
+### Dependency Model (2026-01-31)
+
+- **[Decision 0007](./decision-0007-flat-only-dependencies.md)**: Flat-Only Dependency Model
+  - Adopt flat-only resolution (no transitive dependencies)
+  - Enables git submodules as cloning layer
+  - Simplifies lock file format
+  - See [detailed analysis](../../notes/2026-01-31-flat-only-dependency-analysis.md)
 
 **Note**: Lock file ordering conventions are specified inline in the [Lock File Format specification](../specification/lock-file-format.md#ordering-convention) rather than as a separate ADR, as they represent a formatting convention rather than an architectural decision.
 

@@ -1,10 +1,18 @@
 ---
 title: "Decision 0005: No Partial Dependency Resolution"
 date: 2026-01-05
-status: accepted
+status: superseded
+superseded_by: decision-0007-flat-only-dependencies.md
+superseded_date: 2026-01-31
 ---
 
 # Decision 0005: No Partial Dependency Resolution
+
+> **Note**: This decision has been **superseded** by [Decision 0007: Flat-Only Dependency Model](./decision-0007-flat-only-dependencies.md).
+>
+> With the adoption of flat-only dependencies (no transitive resolution), the concept of "partial resolution" no longer applies. In the flat-only model, there are no transitive dependencies to partially resolve - only direct dependencies explicitly declared in `graft.yaml` are resolved.
+>
+> This decision remains as historical context for the reasoning against partial resolution when transitive dependencies were part of the design.
 
 ## Context
 

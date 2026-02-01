@@ -11,7 +11,8 @@ Insights should graduate to [docs/](../docs/) when they stabilize.
 
 ## Design Analysis
 
-- [One-Level Dependency Exploration (2026-01-31)](./2026-01-31-one-level-dependency-exploration.md) - Analysis of simplified dependency model with only one level of dependencies
+- [Flat-Only Dependency Analysis (2026-01-31)](./2026-01-31-flat-only-dependency-analysis.md) - **Comprehensive exploration** of flat-only dependency model, git submodules integration, DX workflows, and existing tools survey → **Graduated to [Decision 0007](../docs/decisions/decision-0007-flat-only-dependencies.md)**
+- [One-Level Dependency Exploration (2026-01-31)](./2026-01-31-one-level-dependency-exploration.md) - Initial analysis of simplified dependency model with only one level of dependencies
 - [Dependency Management Exploration (2026-01-12)](./2026-01-12-dependency-management-exploration.md) - Evaluated git submodules and artifact-based composition; validated current flat layout
 - [Design Improvements Analysis (2026-01-05)](./2026-01-05-design-improvements-analysis.md) - Comprehensive analysis of design recommendations; created ADRs and updated specifications
 

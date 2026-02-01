@@ -295,11 +295,11 @@ def validate_lock_file(lock: dict) -> list[str]:
     """Validate lock file structure and content."""
     errors = []
 
-    # Check version
-    if 'version' not in lock:
-        errors.append("Missing 'version' field")
-    elif lock['version'] != 1:
-        errors.append(f"Unsupported lock file version: {lock['version']}")
+    # Check apiVersion
+    if 'apiVersion' not in lock:
+        errors.append("Missing 'apiVersion' field")
+    elif not lock['apiVersion'].startswith('graft/'):
+        errors.append(f"Unsupported lock file apiVersion: {lock['apiVersion']}")
 
     # Check dependencies
     if 'dependencies' not in lock:

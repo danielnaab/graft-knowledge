@@ -549,6 +549,162 @@ Commands:
 
 ---
 
+### graft add
+
+**Purpose**: Add a new dependency to the project.
+
+**Syntax**:
+```bash
+graft add <name> <source>#<ref> [options]
+```
+
+**Arguments**:
+- `<name>`: Local name for the dependency (used in `.graft/<name>/`)
+- `<source>`: Git URL or local path
+- `<ref>`: Git ref to consume (tag, branch, or commit)
+
+**Options**:
+- `--no-resolve`: Add to graft.yaml only, don't clone
+- `--json`: Output as JSON
+
+**Behavior**:
+1. Validate source is accessible
+2. Validate ref exists in source repository
+3. Add dependency to graft.yaml
+4. Clone repository to `.graft/<name>/`
+5. Checkout specified ref
+6. Update graft.lock with resolved commit hash
+
+**Output** (success):
+```
+Adding dependency: meta-kb
+
+Source: git@github.com:org/meta-kb.git
+Ref: v2.0.0
+
+✓ Cloned to .graft/meta-kb
+✓ Checked out v2.0.0 (abc123...)
+✓ Updated graft.yaml
+✓ Updated graft.lock
+
+Dependency added successfully!
+```
+
+**Output** (failure):
+```
+Adding dependency: meta-kb
+
+Source: git@github.com:org/meta-kb.git
+Ref: v2.0.0
+
+✗ Failed to clone: Authentication failed
+  Suggestion: Check SSH key configuration
+
+Dependency not added.
+```
+
+**Exit codes**:
+- `0` - Dependency added successfully
+- `1` - Failed to add (clone failed, ref not found, etc.)
+
+**Examples**:
+```bash
+# Add from GitHub with SSH
+graft add meta-kb git@github.com:org/meta-kb.git#v2.0.0
+
+# Add from HTTPS URL
+graft add standards https://github.com/org/standards.git#main
+
+# Add from local path
+graft add shared-utils ../shared-utils#v1.0.0
+
+# Add to config only (don't clone yet)
+graft add meta-kb git@github.com:org/meta-kb.git#v2.0.0 --no-resolve
+```
+
+**Notes**:
+- If dependency name already exists, command fails with error
+- Source URL is stored in both graft.yaml and graft.lock
+- The `#<ref>` syntax follows git URL fragment conventions
+
+---
+
+### graft remove
+
+**Purpose**: Remove a dependency from the project.
+
+**Syntax**:
+```bash
+graft remove <name> [options]
+```
+
+**Arguments**:
+- `<name>`: Name of the dependency to remove
+
+**Options**:
+- `--keep-files`: Remove from config but keep `.graft/<name>/` directory
+- `--json`: Output as JSON
+
+**Behavior**:
+1. Verify dependency exists in graft.yaml
+2. Remove dependency from graft.yaml
+3. Remove dependency from graft.lock
+4. Delete `.graft/<name>/` directory (unless --keep-files)
+5. Update git submodule if applicable
+
+**Output** (success):
+```
+Removing dependency: meta-kb
+
+✓ Removed from graft.yaml
+✓ Removed from graft.lock
+✓ Deleted .graft/meta-kb/
+
+Dependency removed successfully!
+```
+
+**Output** (with --keep-files):
+```
+Removing dependency: meta-kb
+
+✓ Removed from graft.yaml
+✓ Removed from graft.lock
+⚠ Kept .graft/meta-kb/ (use 'rm -rf .graft/meta-kb' to delete)
+
+Dependency removed from configuration.
+```
+
+**Output** (failure):
+```
+Removing dependency: meta-kb
+
+✗ Dependency 'meta-kb' not found in graft.yaml
+
+Available dependencies:
+  - coding-standards
+  - templates-kb
+```
+
+**Exit codes**:
+- `0` - Dependency removed successfully
+- `1` - Failed to remove (not found, permission error, etc.)
+
+**Examples**:
+```bash
+# Remove dependency completely
+graft remove meta-kb
+
+# Remove from config but keep cloned files
+graft remove meta-kb --keep-files
+```
+
+**Notes**:
+- This operation does NOT revert any migrations that were applied
+- Consumer is responsible for any cleanup of files modified by the dependency
+- Use `--keep-files` if you want to preserve the cloned repository for reference
+
+---
+
 ## Mutation Operations
 
 ### graft upgrade

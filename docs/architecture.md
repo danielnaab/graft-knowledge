@@ -276,11 +276,17 @@ The architecture is based on several key decisions:
 
 ### Specification Enhancements (2026-01-05)
 
-5. **[Decision 0005: No Partial Resolution](decisions/decision-0005-no-partial-resolution.md)** - Maintain atomicity and reproducibility
+5. **[Decision 0005: No Partial Resolution](decisions/decision-0005-no-partial-resolution.md)** - Maintain atomicity and reproducibility *(superseded by Decision 0007)*
 
 Additional enhancements:
 - Lock file ordering conventions (see [Lock File Format spec](specification/lock-file-format.md#ordering-convention))
 - Validation operations specification (see [Core Operations spec](specification/core-operations.md#validation-operations))
+
+### Dependency Model (2026-01-31)
+
+6. **[Decision 0007: Flat-Only Dependency Model](decisions/decision-0007-flat-only-dependencies.md)** - Direct dependencies only, no transitive resolution
+
+This decision simplifies the dependency model by treating dependencies as "influences" rather than "components". Consumers explicitly declare all dependencies they use, enabling simpler tooling and clearer ownership.
 
 See [all decisions](decisions/) for complete list and rationale.
 

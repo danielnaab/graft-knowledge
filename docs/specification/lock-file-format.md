@@ -542,12 +542,24 @@ v3 removes transitive dependency tracking:
 
 ### Migration Steps
 
-**Automated migration (recommended):**
+**Simple regeneration (recommended):**
+```bash
+# Delete old lock and dependencies
+rm graft.lock
+rm -rf .graft/
+
+# Regenerate with v3
+graft resolve
+```
+
+This is the simplest and cleanest approach. The lock file will be regenerated with the v3 schema automatically.
+
+**Automated migration (if you want to preserve timestamps):**
 ```bash
 graft migrate-lock --to v3
 ```
 
-**Manual migration:**
+**Manual migration (for reference):**
 1. Read v2 lock file
 2. Filter to only `direct: true` entries
 3. Remove `direct`, `requires`, `required_by` fields

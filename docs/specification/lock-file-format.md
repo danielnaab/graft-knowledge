@@ -24,8 +24,10 @@ This file should be committed to version control to ensure reproducible dependen
 
 ```
 project-root/
+  .gitmodules         ← Git submodule tracking (required)
   graft.yaml          ← Consumer's configuration
   graft.lock          ← This file (generated and updated by Graft)
+  .graft/             ← Dependencies (submodules)
   src/
   README.md
 ```
@@ -361,6 +363,58 @@ def verify_integrity(lock: dict, dep_name: str, repo_path: str) -> bool:
     return True
 ```
 
+## Submodule Synchronization
+
+### Synchronization Guarantee
+
+**The lock file `commit` field MUST match the submodule's checked-out commit.**
+
+Dependencies are tracked as git submodules in `.gitmodules`. The lock file and submodule state must remain synchronized:
+
+| State | Lock file `commit` | Submodule HEAD | Valid? |
+|-------|-------------------|----------------|--------|
+| Synced | `abc123...` | `abc123...` | ✓ Yes |
+| Mismatch | `abc123...` | `def456...` | ✗ No |
+| Missing submodule | `abc123...` | (not initialized) | ✗ No |
+
+### Validation
+
+`graft validate integrity` checks both lock file AND submodule state:
+
+1. For each dependency in lock file:
+   - Verify `.graft/<name>/` exists and is a git submodule
+   - Run `git rev-parse HEAD` in the submodule
+   - Compare to `commit` field in lock file
+   - Report any mismatches
+
+2. Check for orphaned submodules:
+   - Submodules in `.graft/` not tracked in lock file
+
+### When Synchronization Occurs
+
+| Operation | Updates lock file | Updates submodule |
+|-----------|------------------|-------------------|
+| `graft add` | ✓ Yes | ✓ Yes (creates) |
+| `graft remove` | ✓ Yes (removes) | ✓ Yes (removes) |
+| `graft upgrade` | ✓ Yes | ✓ Yes |
+| `graft resolve` | Creates if missing | ✓ Yes |
+| `graft sync` | No | ✓ Yes (matches lock) |
+
+### Sync After Pull
+
+When pulling changes from teammates who upgraded dependencies:
+
+```bash
+# Teammate upgraded a dependency
+git pull
+# graft.lock and .gitmodules changed
+
+# Sync submodule checkouts to match lock file
+graft sync
+```
+
+The `graft sync` command updates submodule checkouts to match the lock file state without running migrations (migrations were already run by the upgrader).
+
 ## Operations
 
 ### Read Lock File
@@ -433,7 +487,7 @@ No integrity issues
 
 ## Git Integration
 
-The lock file should be committed to git:
+The lock file and submodule references should be committed to git:
 
 ```bash
 # After upgrade
@@ -441,9 +495,11 @@ $ graft upgrade meta-kb --to v2.0.0
 Upgraded meta-kb to v2.0.0
 
 $ git status
+modified:   .gitmodules
+modified:   .graft/meta-kb (new commits)
 modified:   graft.lock
 
-$ git add graft.lock
+$ git add .gitmodules .graft/meta-kb graft.lock
 $ git commit -m "Upgrade meta-kb to v2.0.0"
 ```
 
@@ -638,6 +694,7 @@ dependencies:
   - Removed transitive dependency tracking
   - Removed fields: `direct`, `requires`, `required_by`
   - Simplified ordering to alphabetical only
+  - Added submodule synchronization requirements
   - Added migration guide from v2 to v3
   - Updated all examples
   - Supersedes v2

@@ -49,7 +49,7 @@ Each ADR follows a standard structure:
 
 - **[Decision 0007](./decision-0007-flat-only-dependencies.md)**: Flat-Only Dependency Model
   - Adopt flat-only resolution (no transitive dependencies)
-  - Enables git submodules as cloning layer
+  - Uses git submodules as required cloning layer
   - Simplifies lock file format
   - See [detailed analysis](../../notes/2026-01-31-flat-only-dependency-analysis.md)
 

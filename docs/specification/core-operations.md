@@ -232,12 +232,11 @@ graft resolve
 **Behavior**:
 1. Find and parse graft.yaml in current directory
 2. For each **direct dependency**:
-   - If `.graft/<name>/` doesn't exist: clone from git URL
-   - If `.graft/<name>/` exists and is a git repo: fetch and checkout ref
-   - If `.graft/<name>/` exists but isn't a git repo: error
+   - If `.graft/<name>/` doesn't exist: add as git submodule and clone
+   - If `.graft/<name>/` exists and is a git submodule: fetch and checkout ref
+   - If `.graft/<name>/` exists but isn't a git submodule: error
 3. Report resolution status for each dependency
-4. Auto-add `.graft` to `.gitignore` if not already present
-5. Optionally initialize git submodules (if using submodule integration)
+4. Initialize and update git submodules for all dependencies
 
 **Output** (success):
 ```
@@ -279,9 +278,9 @@ Some dependencies failed to resolve.
 **Notes**:
 - Only **direct dependencies** are cloned (flat-only model)
 - Dependencies are stored in `.graft/<name>/` (flat layout)
+- Dependencies are tracked as git submodules in `.gitmodules`
+- `.graft/` should NOT be in `.gitignore` (submodules are tracked by git)
 - Paths in output are absolute for clarity
-- `.graft` is auto-added to `.gitignore` to prevent committing dependencies
-- If using git submodules, this command initializes and updates submodules
 
 
 ---
@@ -324,10 +323,12 @@ graft validate [mode] [options]
 
 **Mode: integrity**
 1. For each dependency in lock file:
-   - Check .graft/<dep-name>/ exists
-   - Run `git rev-parse HEAD` in repository
+   - Check `.graft/<dep-name>/` exists and is a git submodule
+   - Verify submodule is registered in `.gitmodules`
+   - Run `git rev-parse HEAD` in submodule
    - Compare to commit hash in lock file
    - Report any mismatches
+2. Check for orphaned submodules in `.graft/` not tracked in lock file
 
 **Exit codes**:
 - `0` - All validations passed
@@ -344,11 +345,11 @@ graft validate [mode] [options]
 ✓ Lock file validation passed
   - graft.lock format is valid (apiVersion: graft/v0)
   - All required fields present
-  - Dependency graph consistent
+  - All dependencies declared in graft.yaml
 
 ✓ Integrity verification passed
-  - meta-kb: commit matches (abc123...)
-  - standards-kb: commit matches (def456...)
+  - meta-kb: submodule valid, commit matches (abc123...)
+  - standards-kb: submodule valid, commit matches (def456...)
 
 All validations passed ✓
 ```
@@ -365,7 +366,7 @@ All validations passed ✓
 
 ✗ Integrity verification failed
   - templates-kb: Expected abc123..., found def456...
-    Run 'graft resolve' to sync
+    Run 'graft sync' to update submodule
 
 3 validation failures
 ```
@@ -455,7 +456,7 @@ graft sync [<dep-name>]
    - Check if `.graft/<name>/` exists
    - If exists: checkout the commit specified in lock file
    - If doesn't exist: clone and checkout
-3. Update git submodules if applicable
+3. Update git submodules
 4. Do NOT run migrations (teammate already ran them)
 
 **Output**:
@@ -571,9 +572,10 @@ graft add <name> <source>#<ref> [options]
 1. Validate source is accessible
 2. Validate ref exists in source repository
 3. Add dependency to graft.yaml
-4. Clone repository to `.graft/<name>/`
-5. Checkout specified ref
-6. Update graft.lock with resolved commit hash
+4. Add as git submodule to `.graft/<name>/`
+5. Update `.gitmodules` with submodule entry
+6. Checkout specified ref
+7. Update graft.lock with resolved commit hash
 
 **Output** (success):
 ```
@@ -582,8 +584,9 @@ Adding dependency: meta-kb
 Source: git@github.com:org/meta-kb.git
 Ref: v2.0.0
 
-✓ Cloned to .graft/meta-kb
+✓ Added submodule to .graft/meta-kb
 ✓ Checked out v2.0.0 (abc123...)
+✓ Updated .gitmodules
 ✓ Updated graft.yaml
 ✓ Updated graft.lock
 
@@ -649,8 +652,10 @@ graft remove <name> [options]
 1. Verify dependency exists in graft.yaml
 2. Remove dependency from graft.yaml
 3. Remove dependency from graft.lock
-4. Delete `.graft/<name>/` directory (unless --keep-files)
-5. Update git submodule if applicable
+4. Remove submodule entry from `.gitmodules`
+5. Delete `.graft/<name>/` directory (unless --keep-files)
+
+**Note**: With `--keep-files`, the submodule entry is still removed from `.gitmodules`, but the files remain as an untracked directory.
 
 **Output** (success):
 ```
@@ -658,6 +663,7 @@ Removing dependency: meta-kb
 
 ✓ Removed from graft.yaml
 ✓ Removed from graft.lock
+✓ Removed from .gitmodules
 ✓ Deleted .graft/meta-kb/
 
 Dependency removed successfully!
@@ -669,7 +675,8 @@ Removing dependency: meta-kb
 
 ✓ Removed from graft.yaml
 ✓ Removed from graft.lock
-⚠ Kept .graft/meta-kb/ (use 'rm -rf .graft/meta-kb' to delete)
+✓ Removed from .gitmodules
+⚠ Kept .graft/meta-kb/ as untracked directory (use 'rm -rf .graft/meta-kb' to delete)
 
 Dependency removed from configuration.
 ```

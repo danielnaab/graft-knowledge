@@ -114,7 +114,7 @@ From these patterns, we derive:
 
 ```
 project/
-├── .gitmodules         # Git's native submodule tracking (optional)
+├── .gitmodules         # Git's native submodule tracking
 ├── graft.yaml          # Graft's semantic configuration
 ├── graft.lock          # Consumed state (migrations, versions)
 └── .graft/             # Direct dependencies only
@@ -124,17 +124,17 @@ project/
 
 **Key characteristics:**
 - Only **direct dependencies** are cloned to `.graft/`
-- Each dependency is a git repository (optionally managed as submodule)
+- Each dependency is a git submodule
 - Paths are short and predictable: `.graft/<name>/`
 - No transitive dependencies in `.graft/`
 
 ### Two-Layer Architecture
 
-Graft can optionally integrate with git submodules for the cloning layer:
+Graft uses git submodules as the cloning layer:
 
 | Layer | File | Responsibility |
 |-------|------|----------------|
-| **Physical** | `.gitmodules` | Git's tracking of where repos are, what commit |
+| **Physical** | `.gitmodules` | Git's tracking of where repos are, what commit (required) |
 | **Semantic** | `graft.yaml` + `graft.lock` | Changes, migrations, consumed state |
 
 **Physical layer (Git):**
@@ -149,9 +149,9 @@ Graft can optionally integrate with git submodules for the cloning layer:
 
 ---
 
-## Git Submodules Integration
+## Git Submodules as the Cloning Layer
 
-### Why Submodules Work with Flat-Only
+### Why Submodules Are Used
 
 Previous exploration (2026-01-12) rejected submodules due to:
 1. **Nested paths** - Transitives create deep nesting → **Eliminated** (no transitives)
@@ -198,6 +198,15 @@ Graft adds:
 - Verification (`verify` commands after migration)
 - Atomic rollback (on migration failure)
 - Human-readable refs (submodules only store commit hash)
+
+### Synchronization Guarantee
+
+**The commit hash in `graft.lock` MUST match the submodule commit.**
+
+When `graft.lock` is updated, the corresponding submodule's checked-out commit must match the `commit` field in the lock file. This ensures:
+- Lock file and submodule state are always in sync
+- `graft validate integrity` can verify both lock file AND submodule state
+- Reproducible builds across machines
 
 ### Example Workflow
 
@@ -464,10 +473,11 @@ deps:
 **After `graft resolve`:**
 ```
 project/
+├── .gitmodules       # Submodule tracking
 ├── graft.yaml
 ├── graft.lock
 └── .graft/
-    └── meta-kb/      # Only direct dependency
+    └── meta-kb/      # Only direct dependency (submodule)
 ```
 
 **graft.lock contents:**
@@ -499,9 +509,12 @@ deps:
 **After `graft resolve`:**
 ```
 project/
+├── .gitmodules       # Submodule tracking
+├── graft.yaml
+├── graft.lock
 └── .graft/
-    ├── meta-kb/
-    └── coding-standards/
+    ├── meta-kb/           # Submodule
+    └── coding-standards/  # Submodule
 ```
 
 **graft.lock shows both:**
@@ -571,7 +584,8 @@ deps:
 - **2026-01-31 (v3.0)**: Flat-only dependency model
   - Removed transitive dependency resolution
   - Simplified lock file (removed `direct`, `requires`, `required_by` fields)
-  - Added git submodules integration guidance
+  - Made git submodules the required cloning layer
+  - Added synchronization guarantee (lock file ↔ submodule state)
   - Added migration self-containment requirements
   - Updated examples to reflect flat-only model
   - Supersedes v2

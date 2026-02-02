@@ -13,7 +13,7 @@ status: accepted
 **Key insight**: Grafts are **influences** (patterns, templates, migrations that shape your repo), not **components** (runtime libraries you call). Dependencies' dependencies are implementation details, not runtime requirements.
 
 **Benefits**:
-- Enables git submodules as cloning layer (better DX, native git integration)
+- Uses git submodules as required cloning layer (better DX, native git integration)
 - Significantly simpler lock file (removes `requires`/`required_by` tracking)
 - Self-contained migrations (better design constraint)
 - Explicit over implicit (declare what you use)
@@ -132,7 +132,7 @@ cli-tool-template (internally used coding-standards v1)
 No conflict - different files, both work fine in your repo
 ```
 
-### 4. Git Submodules Become Viable
+### 4. Git Submodules as the Required Cloning Layer
 
 With flat-only, **all four original blockers are eliminated**:
 
@@ -143,9 +143,9 @@ With flat-only, **all four original blockers are eliminated**:
 | Conflict detection | **Eliminated** - no transitive conflicts possible |
 | Symlinks | **Eliminated** - no flattening needed |
 
-This enables using git submodules as the cloning layer:
+This makes git submodules the **required** cloning layer:
 ```
-.gitmodules         # Git's native submodule tracking
+.gitmodules         # Git's native submodule tracking (required)
 graft.yaml          # Graft's semantic layer (changes, migrations)
 graft.lock          # Consumed state tracking
 .graft/             # Submodule checkouts
@@ -158,6 +158,8 @@ graft.lock          # Consumed state tracking
 - No special CI/CD integration for cloning
 - Familiar git commands for contributors
 - IDE support for submodules
+
+**Synchronization guarantee**: The commit hash in `graft.lock` MUST match the submodule's checked-out commit.
 
 ### 5. Ecosystem Conventions Are Reasonable
 
@@ -277,11 +279,12 @@ aggregation: true  # Special mode for portals
 - No phantom dependencies
 - "If you use it, declare it"
 
-**Git Submodules Viability**:
-- Can use native git for cloning
+**Git Submodules as Required Cloning Layer**:
+- Uses native git for cloning
 - `git clone --recursive` works
 - Better IDE/tool integration
 - Familiar workflows for contributors
+- Lock file and submodule state stay synchronized
 
 **Better Design Constraints**:
 - Self-contained migrations are more robust

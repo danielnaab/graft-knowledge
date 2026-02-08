@@ -370,8 +370,8 @@ $ graft validate meta-kb
 
 - [Decision 0002: Git Refs Over Semver](./decision-0002-git-refs-over-semver.md)
 - [Decision 0004: Atomic Upgrades](./decision-0004-atomic-upgrades.md)
-- [Specification: graft.yaml Format](../specification/graft-yaml-format.md)
-- [Specification: Change Model](../specification/change-model.md)
+- [Specification: graft.yaml Format](../specifications/graft/graft-yaml-format.md)
+- [Specification: Change Model](../specifications/graft/change-model.md)
 
 ## References
 

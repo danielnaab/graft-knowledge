@@ -53,7 +53,7 @@ Each ADR follows a standard structure:
   - Simplifies lock file format
   - See [detailed analysis](../../notes/2026-01-31-flat-only-dependency-analysis.md)
 
-**Note**: Lock file ordering conventions are specified inline in the [Lock File Format specification](../specification/lock-file-format.md#ordering-convention) rather than as a separate ADR, as they represent a formatting convention rather than an architectural decision.
+**Note**: Lock file ordering conventions are specified inline in the [Lock File Format specification](../specifications/graft/lock-file-format.md#ordering-convention) rather than as a separate ADR, as they represent a formatting convention rather than an architectural decision.
 
 ## Status Legend
 

@@ -11,25 +11,30 @@ Graft is a task runner and git-centered package manager that aims to simplify:
 
 ## Documentation Structure
 
-- **[Specifications](specification/)** - Formal specifications for implementers
-  - [Lock File Format](specification/lock-file-format.md) - State tracking format
-  - [graft.yaml Format](specification/graft-yaml-format.md) - Configuration file format
-  - [Core Operations](specification/core-operations.md) - Operation semantics and behavior
-  - [Change Model](specification/change-model.md) - Data model for changes
-  - [Dependency Layout](specification/dependency-layout.md) - How dependencies are organized
-  - [Dependency Update Notification](specification/dependency-update-notification.md) - Automated update propagation
+- **[Specifications](specifications/)** - All specifications (graft and grove)
+  - **[Graft Specifications](specifications/graft/)** - Formal specifications for the graft dependency management system
+    - [graft.yaml Format](specifications/graft/graft-yaml-format.md) - Configuration file format
+    - [Lock File Format](specifications/graft/lock-file-format.md) - State tracking format
+    - [Core Operations](specifications/graft/core-operations.md) - Operation semantics and behavior
+    - [Change Model](specifications/graft/change-model.md) - Data model for changes
+    - [Dependency Layout](specifications/graft/dependency-layout.md) - How dependencies are organized
+    - [Dependency Update Notification](specifications/graft/dependency-update-notification.md) - Automated update propagation
+
+  - **[Grove Specifications](specifications/grove/)** - Living specifications for the Grove workspace management tool
+    - [Architecture](specifications/grove/architecture.md) - System design and three-layer architecture
+    - [Workspace Configuration](specifications/grove/workspace-config.md) - workspace.yaml format
 
 - **[Decisions](decisions/)** - Architecture Decision Records (ADRs)
   - Documents key architectural choices with rationale
   - Captures alternatives considered and trade-offs
 
-- **[Architecture](architecture.md)** - System design and core concepts overview
+- **[Architecture](architecture.md)** - Graft system design and core concepts overview
 
 - **[Use Cases](use-cases.md)** - What Graft enables and why
 
 - **[CHANGELOG](../CHANGELOG.md)** - Track specification changes and additions
 
-- **[Notes](../notes/)** - Working notes, brainstorming, and design analysis
+- **[Notes](../notes/)** - Working notes, brainstorming, and design exploration
 
 ## For Implementers
 

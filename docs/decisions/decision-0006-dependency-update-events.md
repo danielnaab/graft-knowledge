@@ -193,7 +193,7 @@ Total execution: typically <5 seconds for small organizations.
 
 ## Related
 
-- [Specification: Dependency Update Notification](../specification/dependency-update-notification.md)
+- [Specification: Dependency Update Notification](../specifications/graft/dependency-update-notification.md)
 - [Decision 0005: No Partial Resolution](./decision-0005-no-partial-resolution.md)
 - Forgejo webhooks: https://forgejo.org/docs/latest/user/webhooks/
 

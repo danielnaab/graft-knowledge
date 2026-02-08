@@ -38,7 +38,7 @@ Key properties:
 - **Explicit declarations**: Changes defined in graft.yaml, not parsed
 - **Optional automation**: Migration and verification are optional
 
-See: [Change Model Specification](specification/change-model.md)
+See: [Change Model Specification](specifications/graft/change-model.md)
 
 ### Commands
 
@@ -78,7 +78,7 @@ Key properties:
 - **Integrity**: Stores commit hash for verification
 - **Reproducibility**: Committed to git for consistency
 
-See: [Lock File Format Specification](specification/lock-file-format.md)
+See: [Lock File Format Specification](specifications/graft/lock-file-format.md)
 
 ## Data Model
 
@@ -117,7 +117,7 @@ interface Dependency {
 - Consumed versions
 - Commit hashes
 
-See: [graft.yaml Format Specification](specification/graft-yaml-format.md)
+See: [graft.yaml Format Specification](specifications/graft/graft-yaml-format.md)
 
 ## Core Operations
 
@@ -138,7 +138,7 @@ See: [graft.yaml Format Specification](specification/graft-yaml-format.md)
 
 - `graft <dep>:<command>`: Execute dependency command
 
-See: [Core Operations Specification](specification/core-operations.md)
+See: [Core Operations Specification](specifications/graft/core-operations.md)
 
 ## Atomic Upgrade Flow
 
@@ -279,8 +279,8 @@ The architecture is based on several key decisions:
 5. **[Decision 0005: No Partial Resolution](decisions/decision-0005-no-partial-resolution.md)** - Maintain atomicity and reproducibility *(superseded by Decision 0007)*
 
 Additional enhancements:
-- Lock file ordering conventions (see [Lock File Format spec](specification/lock-file-format.md#ordering-convention))
-- Validation operations specification (see [Core Operations spec](specification/core-operations.md#validation-operations))
+- Lock file ordering conventions (see [Lock File Format spec](specifications/graft/lock-file-format.md#ordering-convention))
+- Validation operations specification (see [Core Operations spec](specifications/graft/core-operations.md#validation-operations))
 
 ### Dependency Model (2026-01-31)
 
@@ -294,10 +294,10 @@ See [all decisions](decisions/) for complete list and rationale.
 
 Detailed specifications for implementation:
 
-- **[Change Model](specification/change-model.md)** - Data model for changes
-- **[graft.yaml Format](specification/graft-yaml-format.md)** - Configuration file format
-- **[Lock File Format](specification/lock-file-format.md)** - State tracking format
-- **[Core Operations](specification/core-operations.md)** - Operation semantics and behavior
+- **[Change Model](specifications/graft/change-model.md)** - Data model for changes
+- **[graft.yaml Format](specifications/graft/graft-yaml-format.md)** - Configuration file format
+- **[Lock File Format](specifications/graft/lock-file-format.md)** - State tracking format
+- **[Core Operations](specifications/graft/core-operations.md)** - Operation semantics and behavior
 
 ## Example Workflow
 

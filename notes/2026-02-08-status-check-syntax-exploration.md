@@ -17,6 +17,9 @@ The triggering question: "The variable assignment feels odd. How does the variab
 
 This led to a deeper examination of what status checks are actually trying to accomplish and what the simplest effective syntax would be.
 
+**Graduated to specifications:**
+- [Workspace Configuration](../docs/specifications/grove/workspace-config.md) - Status script contract, exit code semantics
+
 ---
 
 ## The Original Proposal (Inline Shell Scripts)

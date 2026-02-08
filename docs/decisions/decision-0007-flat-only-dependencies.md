@@ -375,10 +375,10 @@ New commands to support the model:
 ## Specifications to Update
 
 This decision requires updates to:
-- `specification/dependency-layout.md` - Remove transitive resolution algorithm
-- `specification/lock-file-format.md` - Simplify structure (remove `requires`/`required_by`)
-- `specification/graft-yaml-format.md` - Document migration self-containment constraint
-- `specification/core-operations.md` - Update `resolve` semantics
+- `specifications/graft/dependency-layout.md` - Remove transitive resolution algorithm
+- `specifications/graft/lock-file-format.md` - Simplify structure (remove `requires`/`required_by`)
+- `specifications/graft/graft-yaml-format.md` - Document migration self-containment constraint
+- `specifications/graft/core-operations.md` - Update `resolve` semantics
 
 ## References
 

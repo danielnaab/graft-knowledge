@@ -208,8 +208,8 @@ changes:
 
 - [Decision 0001: Initial Scope](./decision-0001-initial-scope.md)
 - [Decision 0003: Explicit Change Declarations](./decision-0003-explicit-change-declarations.md)
-- [Specification: Change Model](../specification/change-model.md)
-- [Specification: graft.yaml Format](../specification/graft-yaml-format.md)
+- [Specification: Change Model](../specifications/graft/change-model.md)
+- [Specification: graft.yaml Format](../specifications/graft/graft-yaml-format.md)
 
 ## References
 

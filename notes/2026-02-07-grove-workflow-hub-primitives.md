@@ -18,6 +18,10 @@ The exploration considered:
 - The "workspace map" vs "workspace replacement" framing
 - What makes a good "home page" for managing multiple workstreams
 
+**Graduated to specifications:**
+- [Grove Architecture](../docs/specifications/grove/architecture.md) - Agentic integration, CLI-first design
+- [Workspace Configuration](../docs/specifications/grove/workspace-config.md) - Status scripts, tags, capture routing, workstreams
+
 ---
 
 ## Key Insights

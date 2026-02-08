@@ -22,6 +22,10 @@ This document explores a **workspace user interface** for Graft — a tool that 
 
 **This is exploratory** — no specification changes should result from this document until ideas are validated and refined.
 
+**Graduated to specifications:**
+- [Grove Architecture](../docs/specifications/grove/architecture.md) - System design, three-layer architecture, workspace concept
+- [Workspace Configuration](../docs/specifications/grove/workspace-config.md) - workspace.yaml format (partial)
+
 ---
 
 ## 1. Key Architectural Insight

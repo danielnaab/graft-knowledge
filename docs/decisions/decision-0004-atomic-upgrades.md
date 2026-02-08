@@ -407,8 +407,8 @@ Graft follows the same pattern: operations are transactional.
 
 - [Decision 0002: Git Refs Over Semver](./decision-0002-git-refs-over-semver.md)
 - [Decision 0003: Explicit Change Declarations](./decision-0003-explicit-change-declarations.md)
-- [Specification: Core Operations](../specification/core-operations.md)
-- [Specification: Lock File Format](../specification/lock-file-format.md)
+- [Specification: Core Operations](../specifications/graft/core-operations.md)
+- [Specification: Lock File Format](../specifications/graft/lock-file-format.md)
 
 ## References
 

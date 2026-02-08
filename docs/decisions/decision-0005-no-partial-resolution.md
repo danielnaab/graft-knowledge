@@ -270,7 +270,7 @@ graft.minimal.lock  # Explicit minimal subset
 
 - [Decision 0004: Atomic Upgrades](./decision-0004-atomic-upgrades.md) - Atomicity principle
 - [Decision 0003: Explicit Change Declarations](./decision-0003-explicit-change-declarations.md) - Explicitness principle
-- [Lock File Format Specification](../specification/lock-file-format.md)
+- [Lock File Format Specification](../specifications/graft/lock-file-format.md)
 
 ## References
 

@@ -102,19 +102,9 @@ Every engine capability is exposed through CLI with structured output. The TUI i
 
 Grove is a local-only tool. It does not phone home, collect telemetry, or make network requests beyond what git operations require (fetch, push, pull).
 
-### 5. Single binary distribution
+### 5. Simple distribution
 
-Download and run. No external dependencies, no installation ceremony. Self-contained with embedded search index, no external database.
-
-## Current Technology Choices
-
-These are current selections for the Rust implementation, not architectural commitments:
-
-- **Git**: gitoxide (pure Rust, protocol v2, no C dependencies)
-- **Search**: tantivy (embeddable full-text search)
-- **File watching**: notify (cross-platform)
-- **TUI**: ratatui + crossterm
-- **Native bindings**: UniFFI (Rust↔Swift/Kotlin, future)
+Minimal installation ceremony. Self-contained with embedded search index, no external database.
 
 ## Open Questions
 

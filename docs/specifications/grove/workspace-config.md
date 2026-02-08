@@ -8,18 +8,18 @@ owners: [human, agent]
 
 ## Intent
 
-Define the workspace.yaml format that declares which repositories belong to a workspace and configures Grove's behavior. The workspace is Grove's core organizing primitive - a named collection of git repositories that you work with together.
+Define the workspace.yaml format that declares which repositories belong to a workspace and configures Grove's behavior. The workspace is Grove's core organizing primitive — a named collection of git repositories that you work with together.
 
 ## Non-goals
 
-- **Not a complex project file** - Keep it simple, just repo declarations and basic settings
-- **Not a replacement for graft.yaml** - Grove reads graft configs, doesn't duplicate them
-- **Not environment-specific** - Same config works across machines (paths can be relative to home)
-- **Not a build system** - Grove navigates and captures, doesn't build or deploy
+- **Not a complex project file** — Keep it simple, just repo declarations and basic settings
+- **Not a replacement for graft.yaml** — Grove reads graft configs, doesn't duplicate them
+- **Not environment-specific** — Same config works across machines (paths can be relative to home)
+- **Not a build system** — Grove navigates and captures, doesn't build or deploy
 
 ## Behavior
 
-### Basic Workspace Declaration
+### Basic Workspace Declaration [Slice 1]
 
 ```gherkin
 Given a workspace config at ~/.config/grove/workspace.yaml:
@@ -34,7 +34,7 @@ Then it loads both repositories into the workspace registry
 And displays their names and status
 ```
 
-### Repository with Tags
+### Repository with Tags [Slice 1]
 
 ```gherkin
 Given a repository declaration with tags:
@@ -48,13 +48,13 @@ Then it shows the tags for filtering
 And can sort by tag weights
 ```
 
-### Capture Configuration
+### Capture Configuration [Slice 3]
 
 ```gherkin
 Given a workspace with capture config:
   """
   capture:
-    inbox: ~/notes/inbox/
+    default_inbox: ~/notes/inbox/
     auto_commit: true
   """
 When a user captures a note
@@ -62,7 +62,7 @@ Then it is saved to ~/notes/inbox/YYYY-MM-DDTHH-MM-SS-title.md
 And automatically committed with message "capture: <first line>"
 ```
 
-### Capture Routing by Prefix
+### Capture Routing by Prefix [Slice 3]
 
 ```gherkin
 Given a workspace with capture routes:
@@ -86,7 +86,7 @@ When a user captures "random thought" (no prefix)
 Then the note is created at ~/notes/inbox/YYYY-MM-DDTHH-MM-SS-random-thought.md
 ```
 
-### Repository Status Scripts
+### Repository Status Scripts [Slice 1]
 
 ```gherkin
 Given a repository with custom status checks:
@@ -97,14 +97,16 @@ Given a repository with custom status checks:
         - name: overdue
           run: |
             days=$(( ($(date +%s) - $(git log -1 --format=%ct)) / 86400 ))
-            [ $days -gt 30 ] && echo "⚠️ Monthly close overdue ($days days)"
+            [ $days -gt 30 ] && echo "Monthly close overdue ($days days)"
   """
 When Grove refreshes status for the finances repository
 Then it executes the status script in the repo's directory
-And displays the output if the script succeeds with exit code 0
+And if the script exits 0 with output, displays that output as a signal
+And if the script exits 0 with no output, shows nothing (all clear)
+And if the script exits non-zero, logs a warning and does not display a signal
 ```
 
-### Multiple Workspace Configurations
+### Multiple Workspace Configurations [Slice 1]
 
 ```gherkin
 Given multiple workspace files exist:
@@ -120,7 +122,7 @@ When user runs `grove` today (no workspace flag)
 Then Grove loads workspace-personal.yaml (last used)
 ```
 
-### Search Exclusions
+### Search Exclusions [Slice 6]
 
 ```gherkin
 Given a workspace with search config:
@@ -132,140 +134,9 @@ When Grove indexes the workspace for search
 Then it skips all directories matching the exclusion patterns
 ```
 
-## Format Specification
+### Edge Cases
 
-### Complete Schema
-
-```yaml
-# Workspace identity
-name: string                    # Required: Workspace display name
-
-# Repository declarations
-repositories:                   # Required: At least one repository
-  - path: string               # Required: Absolute or ~ path to git repo
-    tags: [string]             # Optional: Labels for filtering/sorting
-    status:                    # Optional: Custom status checks
-      - name: string           # Required: Status check identifier
-        run: string            # Required: Shell script (exit 0 = show output)
-
-# Capture configuration
-capture:                       # Optional: Quick capture settings
-  inbox: string                # Default inbox location (path)
-  default_inbox: string        # Alias for 'inbox'
-  auto_commit: boolean         # Auto-commit captures (default: false)
-  template: string             # Capture file template (multiline)
-  routes:                      # Prefix-based routing
-    - prefix: string           # Match prefix (e.g., "@finances")
-      path: string             # Target directory
-      template: string         # Optional: Override template
-
-# Search configuration
-search:                        # Optional: Search index settings
-  exclude: [string]            # Directory patterns to skip
-
-# Tag configuration
-tag_weights:                   # Optional: Tag priority for sorting
-  tag-name: number             # Higher numbers = higher priority
-```
-
-### Field Details
-
-**name** (required)
-- Purpose: Display name for the workspace
-- Format: Any string
-- Example: `"personal"`, `"grove-development"`
-
-**repositories** (required, array)
-- Purpose: List of git repositories in the workspace
-- Minimum: 1 repository
-- Each repository requires `path`, optional `tags` and `status`
-
-**repositories[].path** (required)
-- Purpose: Location of the git repository
-- Format: Absolute path or `~`-prefixed path
-- Must exist and be a git repository
-- Example: `~/src/graft-knowledge`, `/absolute/path/to/repo`
-
-**repositories[].tags** (optional, array)
-- Purpose: Labels for filtering and organization
-- Format: Array of strings, lowercase-with-hyphens convention
-- Example: `[finances, high-priority, monthly-cadence]`
-
-**repositories[].status** (optional, array)
-- Purpose: Custom status checks for the repository
-- Format: Array of status check objects
-- Each check runs a shell script; exit 0 + output = displayed
-
-**repositories[].status[].name** (required)
-- Purpose: Identifier for the status check
-- Format: String, kebab-case convention
-- Example: `overdue`, `uncategorized`, `inbox-overflow`
-
-**repositories[].status[].run** (required)
-- Purpose: Shell script to determine status
-- Format: Multiline string, executed with sh
-- Convention: Exit 0 with output = show; Exit 0 no output = silent; Exit non-zero = error
-- Script runs in repository's directory
-- Environment: Standard shell + git available
-
-**capture.inbox** or **capture.default_inbox**
-- Purpose: Default location for captures without prefix routing
-- Format: Absolute or `~`-prefixed directory path
-- Must be writable
-- Directory created if it doesn't exist
-
-**capture.auto_commit** (optional, default: false)
-- Purpose: Automatically commit captures to git
-- Format: boolean
-- Commit message format: `capture: <first line of note>`
-
-**capture.template** (optional)
-- Purpose: Template for capture file content
-- Format: Multiline string with placeholders
-- Placeholders: `{{date}}`, `{{content}}`
-- Example:
-  ```yaml
-  template: |
-    ---
-    date: {{date}}
-    ---
-    {{content}}
-  ```
-
-**capture.routes** (optional, array)
-- Purpose: Route captures to specific locations by prefix
-- Format: Array of route objects
-- Matching: First matching prefix wins
-- Prefix stripped from filename after routing
-
-**capture.routes[].prefix** (required)
-- Purpose: Prefix to match (e.g., `@finances`)
-- Format: String, typically starts with `@`
-- Case-sensitive
-
-**capture.routes[].path** (required)
-- Purpose: Target directory for this prefix
-- Format: Absolute or `~`-prefixed directory path
-
-**capture.routes[].template** (optional)
-- Purpose: Override workspace template for this route
-- Format: Same as `capture.template`
-
-**search.exclude** (optional, array)
-- Purpose: Patterns to exclude from search indexing
-- Format: Array of strings (directory names or glob patterns)
-- Default: `[".git"]`
-- Common additions: `node_modules`, `vendor`, `target`, `.next`
-
-**tag_weights** (optional, object)
-- Purpose: Define priority for tags (affects sorting)
-- Format: Map of tag name to numeric weight
-- Higher weight = higher priority in home page display
-- Example: `high-priority: 100`, `monthly-cadence: 50`
-
-## Edge Cases
-
-### Missing Required Fields
+#### Missing Required Fields
 
 ```gherkin
 Given a workspace config without 'name':
@@ -277,7 +148,7 @@ When Grove tries to load the config
 Then it fails with error "workspace.yaml: missing required field 'name'"
 ```
 
-### Non-existent Repository Path
+#### Non-existent Repository Path
 
 ```gherkin
 Given a repository path that doesn't exist:
@@ -290,7 +161,7 @@ Then it shows a warning "Repository not found: ~/nonexistent"
 And continues loading other repositories
 ```
 
-### Repository Path is Not a Git Repo
+#### Repository Path is Not a Git Repo
 
 ```gherkin
 Given a path that exists but isn't a git repository:
@@ -303,7 +174,7 @@ Then it shows a warning "Not a git repository: ~/not-git"
 And continues loading other repositories
 ```
 
-### Status Script Exits Non-Zero
+#### Status Script Exits Non-Zero
 
 ```gherkin
 Given a status check that fails:
@@ -313,24 +184,41 @@ Given a status check that fails:
       run: exit 1
   """
 When Grove executes the status check
-Then it logs the error internally
-And does not display any status for that check
+Then it logs a warning about the script error
+And does not display any signal for that check
 ```
 
-### Capture to Non-existent Directory
+#### Status Script Exits Zero with No Output
 
 ```gherkin
-Given a capture inbox that doesn't exist:
+Given a status check that succeeds silently:
+  """
+  status:
+    - name: overdue
+      run: |
+        days=$(( ($(date +%s) - $(git log -1 --format=%ct)) / 86400 ))
+        [ $days -gt 30 ] && echo "Monthly close overdue ($days days)"
+  """
+When the repo was committed to yesterday (not overdue)
+And Grove executes the status check
+Then the script exits 0 with no output
+And Grove displays no signal for that check (all clear)
+```
+
+#### Capture to Non-existent Directory
+
+```gherkin
+Given a capture default_inbox that doesn't exist:
   """
   capture:
-    inbox: ~/notes/new-inbox/
+    default_inbox: ~/notes/new-inbox/
   """
 When a user captures a note
 Then Grove creates the directory ~/notes/new-inbox/
 And saves the capture file
 ```
 
-### Overlapping Capture Prefixes
+#### Overlapping Capture Prefixes
 
 ```gherkin
 Given capture routes with overlapping prefixes:
@@ -342,18 +230,67 @@ Given capture routes with overlapping prefixes:
       path: ~/finances/
   """
 When a user captures "@finances note"
-Then it matches the first prefix "@fin" (first match wins)
-And routes to ~/fin/
+Then it matches "@finances" (longest prefix match)
+And routes to ~/finances/
 ```
 
-**Resolution**: Document that first match wins, recommend specific prefixes first.
+## Annotated Example
+
+Complete workspace.yaml showing the full configuration surface:
+
+```yaml
+# Workspace identity
+name: "my-project"
+
+# Repository declarations (at least one required)
+repositories:
+  - path: ~/src/graft-knowledge         # Required: absolute or ~ path
+    tags: [knowledge, high-priority]     # Optional: labels for filtering
+    status:                              # Optional: custom status checks
+      - name: inbox-overflow             # Status check identifier
+        run: |                           # Shell script (any language)
+          count=$(ls notes/inbox/ 2>/dev/null | wc -l)
+          [ $count -gt 10 ] && echo "$count captures to organize"
+
+  - path: ~/src/my-app
+    tags: [app, active]
+
+# Capture configuration (optional)
+capture:
+  default_inbox: ~/notes/inbox/          # Where unrouted captures go
+  auto_commit: true                      # Auto-commit captures (default: false)
+  template: |                            # Capture file template (optional)
+    ---
+    date: {{date}}
+    ---
+    {{content}}
+  routes:                                # Prefix-based routing (optional)
+    - prefix: "@finances"                # Match prefix (longest wins)
+      path: ~/finances/notes/            # Target directory
+      template: |                        # Override template per route
+        ---
+        date: {{date}}
+        type: transaction
+        ---
+        {{content}}
+    - prefix: "@todo"
+      path: ~/notes/todo/
+
+# Search configuration (optional)
+search:
+  exclude: ["node_modules", ".git", "vendor", "target"]
+
+# Tag weights for sorting (optional, higher = higher priority)
+tag_weights:
+  high-priority: 100
+  active: 50
+```
 
 ## Constraints
 
 ### Performance
 - Config parse time < 10ms
 - Status script execution timeout: 5 seconds per script
-- Maximum 100 repositories per workspace (arbitrary limit for initial implementation)
 
 ### Security
 - Status scripts run in repository directory with user's shell environment
@@ -375,11 +312,12 @@ And routes to ~/fin/
 - [ ] Should workspace configs support inheritance/composition (base + override)?
 - [ ] Should status checks run in parallel or serially?
 - [ ] Should there be a schema validation tool (grove validate-config)?
+- [ ] Should status scripts be defined in workspace.yaml (current), per-repo `.grove.yaml`, or both?
 
 ## Decisions
 
 - **2026-02-07**: Status scripts are shell commands, not a DSL
-  - Maximally flexible - can call any program
+  - Maximally flexible — can call any program
   - Composes with everything (Python, jq, database queries)
   - Zero learning curve (everyone knows shell)
   - Same pattern as graft commands
@@ -398,10 +336,16 @@ And routes to ~/fin/
 - **2026-02-07**: Capture routing uses prefix matching
   - Simple to understand and use
   - Works well with natural language ("`@finances` for money stuff")
-  - First match wins (explicit ordering)
+  - Longest prefix match wins (standard routing behavior)
+
+- **2026-02-08**: Status script exit code semantics
+  - Exit 0 + output → signal present (display the message)
+  - Exit 0 + no output → no signal (all clear, silent)
+  - Exit non-zero → script error (log warning, don't display as signal)
+  - Output presence determines signal, not exit code value
 
 ## Sources
 
-- [Workspace UI Exploration (2026-02-06)](../../../notes/2026-02-06-workspace-ui-exploration.md) - Original workspace config design
-- [Grove Workflow Hub Primitives (2026-02-07)](../../../notes/2026-02-07-grove-workflow-hub-primitives.md) - Six design primitives: status scripts, workstreams as configs, tags, capture routing
-- [Status Check Syntax Exploration (2026-02-08)](../../../notes/2026-02-08-status-check-syntax-exploration.md) - Status script semantics and examples
+- [Workspace UI Exploration (2026-02-06)](../../../notes/2026-02-06-workspace-ui-exploration.md) — Original workspace config design
+- [Grove Workflow Hub Primitives (2026-02-07)](../../../notes/2026-02-07-grove-workflow-hub-primitives.md) — Six design primitives: status scripts, workstreams as configs, tags, capture routing
+- [Status Check Syntax Exploration (2026-02-08)](../../../notes/2026-02-08-status-check-syntax-exploration.md) — Status script semantics and examples

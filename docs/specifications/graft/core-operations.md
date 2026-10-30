@@ -937,8 +937,8 @@ Processing 15 files...
 - [Specification: graft.yaml Format](./graft-yaml-format.md)
 - [Specification: Lock File Format](./lock-file-format.md)
 - [Specification: Dependency Layout](./dependency-layout.md)
-- [Decision 0004: Atomic Upgrades](../decisions/decision-0004-atomic-upgrades.md)
-- [Decision 0007: Flat-Only Dependency Model](../decisions/decision-0007-flat-only-dependencies.md)
+- [Decision 0004: Atomic Upgrades](../../decisions/decision-0004-atomic-upgrades.md)
+- [Decision 0007: Flat-Only Dependency Model](../../decisions/decision-0007-flat-only-dependencies.md)
 
 ## Changelog
 

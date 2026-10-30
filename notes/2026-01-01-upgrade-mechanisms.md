@@ -314,10 +314,10 @@ The finalized architecture positions Graft as:
 Documentation has been created:
 - **4 decision records** capturing architectural choices
 - **4 specification documents** ready for implementation:
-  - [Change Model](../docs/specification/change-model.md)
-  - [graft.yaml Format](../docs/specification/graft-yaml-format.md)
-  - [Lock File Format](../docs/specification/lock-file-format.md)
-  - [Core Operations](../docs/specification/core-operations.md)
+  - [Change Model](../docs/specifications/graft/change-model.md)
+  - [graft.yaml Format](../docs/specifications/graft/graft-yaml-format.md)
+  - [Lock File Format](../docs/specifications/graft/lock-file-format.md)
+  - [Core Operations](../docs/specifications/graft/core-operations.md)
 - **Updated architecture** document with complete system design
 
 The Python implementation can now proceed based on these specs.

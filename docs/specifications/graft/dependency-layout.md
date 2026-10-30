@@ -454,8 +454,8 @@ deps:
   - [Core Operations](./core-operations.md)
 
 - **Related decisions:**
-  - [Decision 0007: Flat-Only Dependency Model](../decisions/decision-0007-flat-only-dependencies.md)
-  - [Analysis Note: Flat-Only Exploration](../../notes/2026-01-31-flat-only-dependency-analysis.md)
+  - [Decision 0007: Flat-Only Dependency Model](../../decisions/decision-0007-flat-only-dependencies.md)
+  - [Analysis Note: Flat-Only Exploration](../../../notes/2026-01-31-flat-only-dependency-analysis.md)
 
 ---
 

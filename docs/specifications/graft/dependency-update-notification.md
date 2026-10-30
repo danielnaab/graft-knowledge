@@ -75,7 +75,7 @@ Update PRs should include:
 
 ## Event Strategy
 
-See [Decision 0006: Dependency Update Event Strategy](../decisions/decision-0006-dependency-update-events.md) for the rationale behind the chosen approach.
+See [Decision 0006: Dependency Update Event Strategy](../../decisions/decision-0006-dependency-update-events.md) for the rationale behind the chosen approach.
 
 ### Recommended: Organization-wide Event with Polling Fallback
 
@@ -372,7 +372,7 @@ Options:
 
 ## Related
 
-- [Decision 0006: Dependency Update Event Strategy](../decisions/decision-0006-dependency-update-events.md)
+- [Decision 0006: Dependency Update Event Strategy](../../decisions/decision-0006-dependency-update-events.md)
 - [Specification: graft.yaml Format](./graft-yaml-format.md)
 - [Specification: Core Operations](./core-operations.md)
 

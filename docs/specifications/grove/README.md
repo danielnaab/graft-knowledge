@@ -1,3 +1,8 @@
+---
+title: "Grove Specifications"
+status: draft
+---
+
 # Grove Specifications
 
 Living specifications for the Grove workspace management tool.

@@ -670,4 +670,4 @@ This separation is clean, testable, and extensible without requiring Grove or Gr
 
 - [Grove as Workflow Hub: Design Primitives (2026-02-07)](./2026-02-07-grove-workflow-hub-primitives.md) - Original status check proposal
 - [Grove Vertical Slices (2026-02-06)](./2026-02-06-grove-vertical-slices.md) - Implementation plan
-- [Graft Commands Specification](../docs/specification/graft-yaml-format.md) - Current command format (if exists)
+- [Graft Commands Specification](../docs/specifications/graft/graft-yaml-format.md) - Current command format (if exists)

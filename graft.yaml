@@ -1,3 +1,4 @@
 apiVersion: graft/v0
 deps:
   meta-knowledge-base: "git@github.com:danielnaab/meta-knowledge-base.git#main"
+  living-specifications: "git@github.com:danielnaab/living-specifications.git#main"

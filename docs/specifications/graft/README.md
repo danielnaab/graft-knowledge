@@ -1,3 +1,8 @@
+---
+title: "Graft Specifications"
+status: draft
+---
+
 # Graft Specifications
 
 Formal specifications for the graft dependency management system.
@@ -41,6 +46,6 @@ The format is detailed and implementer-focused, suitable for generating code fro
 
 ## Related Documentation
 
-- [../architecture.md](../architecture.md) - Graft system architecture
-- [../use-cases.md](../use-cases.md) - Use cases driving graft design
-- [../decisions/](../decisions/) - Architecture decision records
+- [../../architecture.md](../../architecture.md) - Graft system architecture
+- [../../use-cases.md](../../use-cases.md) - Use cases driving graft design
+- [../../decisions/](../../decisions/) - Architecture decision records

@@ -211,7 +211,7 @@ changes:
 - [Specification: Change Model](../specifications/graft/change-model.md)
 - [Specification: graft.yaml Format](../specifications/graft/graft-yaml-format.md)
 
-## References
+## Sources
 
 - Git refs documentation: https://git-scm.com/book/en/v2/Git-Internals-Git-References
 - Semantic Versioning: https://semver.org/

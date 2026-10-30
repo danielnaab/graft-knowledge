@@ -1,3 +1,8 @@
+---
+title: "Architectural Decision Records"
+status: working
+---
+
 # Architectural Decision Records
 
 This directory contains Architectural Decision Records (ADRs) documenting key design decisions for Graft.
@@ -75,10 +80,10 @@ When making significant architectural decisions:
 ## Related
 
 - [Notes](../../notes/) - Working notes, brainstorming, and design analysis
-- [Specifications](../specification/) - Formal specifications implementing these decisions
+- [Specifications](../specifications/) - Formal specifications implementing these decisions
 - [Architecture Overview](../architecture.md) - High-level architecture
 
-## References
+## Sources
 
 - **ADR concept**: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
 - **ADR templates**: https://github.com/joelparkerhenderson/architecture-decision-record

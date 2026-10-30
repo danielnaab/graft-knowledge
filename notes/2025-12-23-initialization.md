@@ -50,5 +50,5 @@ This KB is ready for evolution. Future work might include:
 
 ## Sources
 
-- Meta knowledge base: [../../meta-knowledge-base/docs/meta.md](../../meta-knowledge-base/docs/meta.md)
+- Meta knowledge base: [../.graft/meta-knowledge-base/README.md](../.graft/meta-knowledge-base/README.md)
 - Initial scope decision: [../docs/decisions/decision-0001-initial-scope.md](../docs/decisions/decision-0001-initial-scope.md)

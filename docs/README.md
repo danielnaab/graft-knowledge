@@ -1,6 +1,11 @@
+---
+title: "Graft Project Knowledge Base"
+status: working
+---
+
 # Graft Project Knowledge Base
 
-This KB follows the [meta knowledge base](../../meta-knowledge-base/docs/meta.md) system.
+This KB follows the [meta knowledge base](../.graft/meta-knowledge-base/README.md) system.
 
 ## Overview
 

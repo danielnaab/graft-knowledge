@@ -1,3 +1,8 @@
+---
+title: "Specifications"
+status: working
+---
+
 # Specifications
 
 This directory contains all specifications for the graft ecosystem, organized by tool.

@@ -21,7 +21,7 @@ ADRs provide:
 Each ADR follows a standard structure:
 - Title: "Decision NNNN: Brief Title"
 - Date: When the decision was made
-- Status: a lifecycle status from `knowledge-base.yaml` (draft | working | stable | deprecated)
+- Status: accepted | rejected | superseded | deprecated
 - Context, Decision, Rationale, Alternatives, Consequences, Related
 
 ## Decisions
@@ -62,9 +62,10 @@ Each ADR follows a standard structure:
 
 ## Status Legend
 
-- **draft** / **working** - Decision is proposed or still settling
-- **stable** - Decision is accepted and active; it should be followed
-- **deprecated** - Decision was superseded (`superseded_by` names the replacement) or is being phased out (documents timeline)
+- **accepted** - Decision is active and should be followed
+- **rejected** - Decision was considered but not adopted (documents rationale)
+- **superseded** - Decision replaced by a newer decision (references replacement)
+- **deprecated** - Decision is being phased out (documents timeline)
 
 ## Creating New ADRs
 

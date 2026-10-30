@@ -1,7 +1,7 @@
 ---
 title: "Decision 0005: No Partial Dependency Resolution"
 date: 2026-01-05
-status: deprecated
+status: superseded
 superseded_by: decision-0007-flat-only-dependencies.md
 superseded_date: 2026-01-31
 ---

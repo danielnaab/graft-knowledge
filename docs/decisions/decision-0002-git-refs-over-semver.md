@@ -1,7 +1,7 @@
 ---
 title: "Use Git Refs Over Semantic Versioning"
 date: 2026-01-01
-status: stable
+status: accepted
 ---
 
 # Use Git Refs Over Semantic Versioning

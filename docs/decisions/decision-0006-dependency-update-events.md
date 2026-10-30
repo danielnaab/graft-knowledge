@@ -1,7 +1,7 @@
 ---
 title: "Dependency Update Event Strategy"
 date: 2026-01-05
-status: stable
+status: accepted
 ---
 
 # Dependency Update Event Strategy

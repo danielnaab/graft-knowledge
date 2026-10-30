@@ -1,7 +1,7 @@
 ---
 title: "Explicit Change Declarations in graft.yaml"
 date: 2026-01-01
-status: stable
+status: accepted
 ---
 
 # Explicit Change Declarations in graft.yaml

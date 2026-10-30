@@ -1,7 +1,7 @@
 ---
 title: "Atomic Upgrades Without Partial States"
 date: 2026-01-01
-status: stable
+status: accepted
 ---
 
 # Atomic Upgrades Without Partial States

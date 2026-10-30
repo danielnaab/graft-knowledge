@@ -1,7 +1,7 @@
 ---
 title: "Decision 0007: Flat-Only Dependency Model"
 date: 2026-01-31
-status: stable
+status: accepted
 ---
 
 # Decision 0007: Flat-Only Dependency Model

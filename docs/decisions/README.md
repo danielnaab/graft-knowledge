@@ -1,3 +1,8 @@
+---
+title: "Architectural Decision Records"
+status: working
+---
+
 # Architectural Decision Records
 
 This directory contains Architectural Decision Records (ADRs) documenting key design decisions for Graft.
@@ -16,7 +21,7 @@ ADRs provide:
 Each ADR follows a standard structure:
 - Title: "Decision NNNN: Brief Title"
 - Date: When the decision was made
-- Status: accepted | rejected | superseded | deprecated
+- Status: a lifecycle status from `knowledge-base.yaml` (draft | working | stable | deprecated)
 - Context, Decision, Rationale, Alternatives, Consequences, Related
 
 ## Decisions
@@ -57,10 +62,9 @@ Each ADR follows a standard structure:
 
 ## Status Legend
 
-- **accepted** - Decision is active and should be followed
-- **rejected** - Decision was considered but not adopted (documents rationale)
-- **superseded** - Decision replaced by a newer decision (references replacement)
-- **deprecated** - Decision is being phased out (documents timeline)
+- **draft** / **working** - Decision is proposed or still settling
+- **stable** - Decision is accepted and active; it should be followed
+- **deprecated** - Decision was superseded (`superseded_by` names the replacement) or is being phased out (documents timeline)
 
 ## Creating New ADRs
 
@@ -75,10 +79,10 @@ When making significant architectural decisions:
 ## Related
 
 - [Notes](../../notes/) - Working notes, brainstorming, and design analysis
-- [Specifications](../specification/) - Formal specifications implementing these decisions
+- [Specifications](../specifications/) - Formal specifications implementing these decisions
 - [Architecture Overview](../architecture.md) - High-level architecture
 
-## References
+## Sources
 
 - **ADR concept**: https://cognitect.com/blog/2011/11/15/documenting-architecture-decisions
 - **ADR templates**: https://github.com/joelparkerhenderson/architecture-decision-record

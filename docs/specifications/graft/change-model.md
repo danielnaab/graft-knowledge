@@ -436,5 +436,5 @@ Both are valuable for different purposes:
 
 - [Specification: graft.yaml Format](./graft-yaml-format.md)
 - [Specification: Core Operations](./core-operations.md)
-- [Decision 0002: Git Refs Over Semver](../decisions/decision-0002-git-refs-over-semver.md)
-- [Decision 0003: Explicit Change Declarations](../decisions/decision-0003-explicit-change-declarations.md)
+- [Decision 0002: Git Refs Over Semver](../../decisions/decision-0002-git-refs-over-semver.md)
+- [Decision 0003: Explicit Change Declarations](../../decisions/decision-0003-explicit-change-declarations.md)

@@ -1,7 +1,7 @@
 ---
 title: "Explicit Change Declarations in graft.yaml"
 date: 2026-01-01
-status: accepted
+status: stable
 ---
 
 # Explicit Change Declarations in graft.yaml
@@ -373,7 +373,7 @@ $ graft validate meta-kb
 - [Specification: graft.yaml Format](../specifications/graft/graft-yaml-format.md)
 - [Specification: Change Model](../specifications/graft/change-model.md)
 
-## References
+## Sources
 
 - Keep a Changelog: https://keepachangelog.com/
 - Common Changelog: https://common-changelog.org/

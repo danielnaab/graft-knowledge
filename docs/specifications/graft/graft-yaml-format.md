@@ -658,7 +658,7 @@ If not specified, latest version is assumed.
 - [Specification: Change Model](./change-model.md)
 - [Specification: Lock File Format](./lock-file-format.md)
 - [Specification: Core Operations](./core-operations.md)
-- [Decision 0003: Explicit Change Declarations](../decisions/decision-0003-explicit-change-declarations.md)
+- [Decision 0003: Explicit Change Declarations](../../decisions/decision-0003-explicit-change-declarations.md)
 
 ## References
 

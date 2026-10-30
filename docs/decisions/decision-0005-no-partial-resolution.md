@@ -1,7 +1,7 @@
 ---
 title: "Decision 0005: No Partial Dependency Resolution"
 date: 2026-01-05
-status: superseded
+status: deprecated
 superseded_by: decision-0007-flat-only-dependencies.md
 superseded_date: 2026-01-31
 ---
@@ -272,7 +272,7 @@ graft.minimal.lock  # Explicit minimal subset
 - [Decision 0003: Explicit Change Declarations](./decision-0003-explicit-change-declarations.md) - Explicitness principle
 - [Lock File Format Specification](../specifications/graft/lock-file-format.md)
 
-## References
+## Sources
 
 - **All-or-nothing transactions**: https://en.wikipedia.org/wiki/Atomicity_(database_systems)
 - **Reproducible builds**: https://reproducible-builds.org/

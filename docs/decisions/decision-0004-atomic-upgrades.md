@@ -1,7 +1,7 @@
 ---
 title: "Atomic Upgrades Without Partial States"
 date: 2026-01-01
-status: accepted
+status: stable
 ---
 
 # Atomic Upgrades Without Partial States
@@ -410,7 +410,7 @@ Graft follows the same pattern: operations are transactional.
 - [Specification: Core Operations](../specifications/graft/core-operations.md)
 - [Specification: Lock File Format](../specifications/graft/lock-file-format.md)
 
-## References
+## Sources
 
 - ACID properties: https://en.wikipedia.org/wiki/ACID
 - Git transactional model

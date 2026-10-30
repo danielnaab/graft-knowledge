@@ -712,8 +712,8 @@ This document expands on ideas from [Evolution Brainstorming (2026-01-05)](./202
 - [Graft Architecture](../docs/architecture.md)
 - [Evolution Brainstorming (2026-01-05)](./2026-01-05-evolution-brainstorming.md)
 - [Design Improvements Analysis](./2026-01-05-design-improvements-analysis.md)
-- [Core Operations Specification](../docs/specification/core-operations.md)
-- [Meta Knowledge Base: Temporal Layers](../../meta-knowledge-base/policies/temporal-layers.md)
+- [Core Operations Specification](../docs/specifications/graft/core-operations.md)
+- [Meta Knowledge Base: Temporal Layers](../.graft/meta-knowledge-base/docs/policies/temporal-layers.md)
 
 ---
 

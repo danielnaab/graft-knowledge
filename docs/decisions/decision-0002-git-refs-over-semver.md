@@ -1,7 +1,7 @@
 ---
 title: "Use Git Refs Over Semantic Versioning"
 date: 2026-01-01
-status: accepted
+status: stable
 ---
 
 # Use Git Refs Over Semantic Versioning
@@ -211,7 +211,7 @@ changes:
 - [Specification: Change Model](../specifications/graft/change-model.md)
 - [Specification: graft.yaml Format](../specifications/graft/graft-yaml-format.md)
 
-## References
+## Sources
 
 - Git refs documentation: https://git-scm.com/book/en/v2/Git-Internals-Git-References
 - Semantic Versioning: https://semver.org/

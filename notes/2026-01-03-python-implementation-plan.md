@@ -373,10 +373,10 @@ The work is broken into 10 phases that build on each other. Each phase has clear
 ## Related
 
 - [Architecture](../docs/architecture.md) - Overall system architecture
-- [Change Model Specification](../docs/specification/change-model.md)
-- [graft.yaml Format Specification](../docs/specification/graft-yaml-format.md)
-- [Lock File Format Specification](../docs/specification/lock-file-format.md)
-- [Core Operations Specification](../docs/specification/core-operations.md)
+- [Change Model Specification](../docs/specifications/graft/change-model.md)
+- [graft.yaml Format Specification](../docs/specifications/graft/graft-yaml-format.md)
+- [Lock File Format Specification](../docs/specifications/graft/lock-file-format.md)
+- [Core Operations Specification](../docs/specifications/graft/core-operations.md)
 
 ## Next Steps
 

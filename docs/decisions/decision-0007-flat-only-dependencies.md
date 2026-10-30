@@ -1,7 +1,7 @@
 ---
 title: "Decision 0007: Flat-Only Dependency Model"
 date: 2026-01-31
-status: accepted
+status: stable
 ---
 
 # Decision 0007: Flat-Only Dependency Model
@@ -380,7 +380,7 @@ This decision requires updates to:
 - `specifications/graft/graft-yaml-format.md` - Document migration self-containment constraint
 - `specifications/graft/core-operations.md` - Update `resolve` semantics
 
-## References
+## Sources
 
 - **Go Modules (MVS)**: Example of transitive resolution complexity - https://research.swtch.com/vgo-mvs
 - **git-subrepo**: Tool showing alternative to submodules - https://github.com/ingydotnet/git-subrepo
